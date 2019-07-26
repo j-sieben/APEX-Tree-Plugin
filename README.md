@@ -12,12 +12,12 @@ I learned a lot from their work but at the end I felt something different had to
 ## Solution
 I decided to create two plugins based on one JavaScript file which in essence is a wrapper around `apex.treeView` (hence the name `treeViewWrapper.js`). The plugins are
 
-* A region plugin with the ability to refresh to enable users to change the entries of the tree
+* A region plugin with the ability to dynamically refresh the tree
 * An item plugin that encapsulates `apex.treeView` as a page item and allows to select entries with checkboxes.
 
 The item plugin is especially useful as I strongly dislike the idea of having a region with a value. Having `apex.treeView` as the basis for a normal page item makes it something like the shuttle control. It's very easy to integrate into the page as it has a setValue, getValue method, allows for cascading lov support and so on.
 
-The region plugin is refreshable which comes in handy if you want to edit the entries by clicking on them. The region automatically binds to the `apexafterdialogclose` event and refreshes itself, maintaining its visual state. I really like this approach from mennooo.
+The region plugin is refreshable which comes in handy if you want to edit the entries by clicking on them. The region automatically binds to the `apexafterdialogclose` event and refreshes itself, maintaining its visual state. I really like this approach from mennooo. As mennooo pointed out, you need to create links by calling the `apex_util.prepare_url`. This method allows to set the triggering item. This item should be set to the `static region id` you define for your region plugin.
 
 ## Differences
 
