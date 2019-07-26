@@ -1,54 +1,47 @@
-CREATE OR REPLACE PACKAGE BODY plugin_apex_tree
-AS
-  TYPE tree_rec IS RECORD (
-    node_status NUMBER,
-    node_level NUMBER,
-    node_title utl_apex.sql_char,
-    node_icon utl_apex.sql_char,
-    node_value utl_apex.sql_char,
-    node_tooltip utl_apex.sql_char,
-    node_link utl_apex.sql_char);
-
-  TYPE tree_tab IS TABLE OF tree_rec INDEX BY PLS_INTEGER;
-
-  g_has_identity BOOLEAN DEFAULT TRUE;
-  g_root_count NUMBER := 1;
+create or replace package body plugin_apex_tree
+as
   
+  subtype sql_char is varchar2(4000 byte);
+  subtype max_char is varchar2(32767);
+
+  type tree_rec is record (
+    node_status number,
+    node_level number,
+    node_title sql_char,
+    node_icon sql_char,
+    node_value sql_char,
+    node_tooltip sql_char,
+    node_link sql_char);
+
+  type tree_tab is table of tree_rec index by pls_integer;
+
+  g_has_identity boolean default true;
+  g_root_count number := 1;
   
-  -------------------------------------------------------------------------------------------
-  --  Function: get_data, Ermittelt die Daten der Region
-  --
-  --  Historie:
-  --    18.07.2019 J. Sieben: Ersterstellung
-  -------------------------------------------------------------------------------------------
-  FUNCTION get_data (p_region_id IN NUMBER, 
-                     p_stmt IN VARCHAR2)
-  RETURN tree_tab
-  AS
-    l_query apex_application_page_trees.tree_query%TYPE;
+  C_COLUMN_COUNT constant number := 7;
+  
+  /* HELPER */
+  /** Method to retrieve the data based on LOV source or region source
+   * @param  p_stmt       SQL statement to retrieve the hierachical values.
+   * @return PL/SQL table of type TREE_REC with the hierarchical data
+   * @usage  This method uses APEX_PLUGIN_UTIL.GET_DATA2 to retrieve the values of the queries
+   */
+  function get_data ( 
+    p_stmt in varchar2)
+    return tree_tab
+  as
     l_source_result apex_plugin_util.t_column_value_list2;
     l_tree_tab tree_tab;
-    c_columns_count CONSTANT NUMBER := 7;
-  BEGIN    
-    -- Lese SQL-Abfrage aus Regions-Source
-    IF p_region_id IS NOT NULL THEN
-    SELECT tree_query 
-      INTO l_query
-      FROM apex_application_page_trees
-     WHERE region_id = p_region_id;
-    ELSE
-      l_query := p_stmt;
-    END IF;
-
-    -- Abfrage ausfuehren
+  begin    
+    -- get hierarchical data
     l_source_result := apex_plugin_util.get_data2(
-                         p_sql_statement => l_query,
-                         p_min_columns => c_columns_count,
-                         p_max_columns => c_columns_count,
-                         p_component_name => NULL);
+                         p_sql_statement => p_stmt,
+                         p_min_columns => C_COLUMN_COUNT,
+                         p_max_columns => C_COLUMN_COUNT,
+                         p_component_name => null);
 
-    -- Gefundene Daten in PL/SQL-Tabelle kopieren
-    FOR idx IN 1..l_source_result(1).value_list.COUNT LOOP    
+    -- copy result to PL/SQL table
+    for idx in 1..l_source_result(1).value_list.count loop    
       l_tree_tab(idx).node_status := l_source_result(1).value_list(idx).number_value;
       l_tree_tab(idx).node_level := l_source_result(2).value_list(idx).number_value;
       l_tree_tab(idx).node_title := apex_plugin_util.get_value_as_varchar2(l_source_result(3).data_type, l_source_result(3).value_list(idx));
@@ -57,96 +50,89 @@ AS
       l_tree_tab(idx).node_tooltip := apex_plugin_util.get_value_as_varchar2(l_source_result(6).data_type, l_source_result(6).value_list(idx));
       l_tree_tab(idx).node_link := apex_plugin_util.get_value_as_varchar2(l_source_result(7).data_type, l_source_result(7).value_list(idx));
 
-      IF l_tree_tab(idx).node_value IS NULL THEN
-        g_has_identity := FALSE;
-      END IF;
+      if l_tree_tab(idx).node_value is null then
+        g_has_identity := false;
+      end if;
 
-      IF l_tree_tab(idx).node_level = 1 THEN
+      if l_tree_tab(idx).node_level = 1 then
         g_root_count := g_root_count + 1;
-      END IF;    
-    END LOOP;
+      end if;    
+    end loop;
 
-    RETURN l_tree_tab;
-  END get_data;
-  -------------------------------------------------------------------------------------------
+    return l_tree_tab;
+  end get_data;
   
   
-  -------------------------------------------------------------------------------------------
-  --  Function: print_json, Schreibt die Daten als JSON in den http-Stream
-  --
-  --  Historie:
-  --    18.07.2019 J. Sieben: Ersterstellung
-  -------------------------------------------------------------------------------------------
-  PROCEDURE print_json (p_region_id IN NUMBER DEFAULT NULL,
-                        p_stmt      IN VARCHAR2 DEFAULT NULL)
-  AS
+  /** Method to emit the retrieved data as a JSON data stream
+   * @param [p_stmt]      SQL statement to retrieve the hierachical values.
+   * @usage  Is used to convert the result of GET_DATA to JSON and print it to the http stream
+   */
+  procedure print_json (
+    p_stmt in varchar2)
+  as
     l_tree_tab tree_tab;
-    l_prev_node_level NUMBER := 1;
-  BEGIN
-    l_tree_tab := get_data(p_region_id, p_stmt);
+    l_prev_node_level number := 1;
+  begin
+    l_tree_tab := get_data(p_stmt);
 
     apex_json.open_object;    
     apex_json.open_object('config');
-    apex_json.WRITE('hasIdentity', g_has_identity);
-    apex_json.WRITE('rootAdded', g_root_count > 1);  
+    apex_json.write('hasIdentity', g_has_identity);
+    apex_json.write('rootAdded', g_root_count > 1);  
     apex_json.close_object;    
     apex_json.open_object('data');
 
-    IF g_root_count > 1 THEN    
-      apex_json.WRITE('id', 'root0');
-      apex_json.WRITE('label', 'root');
+    if g_root_count > 1 then    
+      apex_json.write('id', 'root0');
+      apex_json.write('label', 'root');
       apex_json.open_array('children');    
-    END IF;
+    end if;
 
-    FOR idx IN 1..l_tree_tab.COUNT LOOP    
-      -- Schliesse geschachteltes Array
-      IF l_tree_tab(idx).node_level < l_prev_node_level THEN      
-        FOR nesting_idx IN 1..(l_prev_node_level - l_tree_tab(idx).node_level) LOOP          
+    for idx in 1..l_tree_tab.count loop    
+      if l_tree_tab(idx).node_level < l_prev_node_level then  
+        -- close nested array  
+        for nesting_idx in 1..(l_prev_node_level - l_tree_tab(idx).node_level) loop          
           apex_json.close_array;
           apex_json.close_object;        
-        END LOOP;      
-      END IF;
+        end loop;      
+      end if;
 
       l_prev_node_level := l_tree_tab(idx).node_level;
 
-      IF NOT (g_root_count = 1 AND l_tree_tab(idx).node_level = 1) THEN
+      if not (g_root_count = 1 and l_tree_tab(idx).node_level = 1) then
         apex_json.open_object;
-      END IF;
+      end if;
 
-      apex_json.WRITE('id', l_tree_tab(idx).node_value);
-      apex_json.WRITE('label', l_tree_tab(idx).node_title);
-      apex_json.WRITE('icon', l_tree_tab(idx).node_icon);
-      apex_json.WRITE('link', l_tree_tab(idx).node_link);
-      apex_json.WRITE('tooltip', l_tree_tab(idx).node_tooltip);
+      apex_json.write('id', l_tree_tab(idx).node_value);
+      apex_json.write('label', l_tree_tab(idx).node_title);
+      apex_json.write('icon', l_tree_tab(idx).node_icon);
+      apex_json.write('link', l_tree_tab(idx).node_link);
+      apex_json.write('tooltip', l_tree_tab(idx).node_tooltip);
 
-      -- Datensatz ist Blatt, Objekt schliessen
-      IF l_tree_tab(idx).node_status = 0 THEN      
+      if l_tree_tab(idx).node_status = 0 then
+        -- node is a leaf, close object
         apex_json.close_object;    
-      ELSE      
+      else      
         apex_json.open_array('children');        
-      END IF;    
-    END LOOP;
+      end if;    
+    end loop;
 
     apex_json.close_all;
-  END print_json;
-  -------------------------------------------------------------------------------------------
+  end print_json;
   
   
-  -------------------------------------------------------------------------------------------
-  --  Function: render
-  --
-  --  Historie:
-  --    18.07.2019 J. Sieben: Ersterstellung
-  -------------------------------------------------------------------------------------------  
-  FUNCTION render_region(p_region              IN apex_plugin.t_region,
-                         p_plugin              IN apex_plugin.t_plugin,
-                         p_is_printer_friendly IN BOOLEAN)
-  RETURN apex_plugin.t_region_render_result
-  AS
-    c_item_template CONSTANT utl_apex.sql_char := q'^<div id="#REGION_STATIC_ID#"><div id="#REGION_STATIC_ID#_TREE"></div></div>^';
+  /* INTERFACE */
+  function render_region(
+    p_region in apex_plugin.t_region,
+    p_plugin in apex_plugin.t_plugin,
+    p_is_printer_friendly in boolean)
+  return apex_plugin.t_region_render_result
+  as
+    C_ITEM_TEMPLATE constant sql_char := 
+      q'^<div id="#REGION_STATIC_ID#"><div id="#REGION_STATIC_ID#_TREE"></div></div>^';
 
-    c_js_template CONSTANT utl_apex.sql_char := 
-      q'[de.condes.plugin.apexTree.Region('##REGION_STATIC_ID#', {
+    C_JS_TEMPLATE constant sql_char := 
+      q'^de.condes.plugin.apexTree.Region('##REGION_STATIC_ID#', {
         ajaxIdentifier: '#AJAX_IDENTIFIER#',
         tree$: $('##REGION_STATIC_ID#_TREE'),
         treeId: '#REGION_STATIC_ID#_TREE',
@@ -160,14 +146,13 @@ AS
           },
           data:{}
         }
-      })]';
+      })^';
     
     l_result apex_plugin.t_region_render_result;
-    l_js utl_apex.max_char;
-    l_action_type p_region.attribute_01%TYPE;
-    l_icon_type p_region.attribute_02%TYPE;
-  BEGIN
-    pit.enter_mandatory;
+    l_js max_char;
+    l_action_type p_region.attribute_01%type;
+    l_icon_type p_region.attribute_02%type;
+  begin
   
     apex_plugin_util.debug_region(
       p_plugin => p_plugin,
@@ -178,11 +163,11 @@ AS
     l_action_type := p_region.attribute_01;
     l_icon_type := p_region.attribute_02;
       
-    htp.p(utl_text.bulk_replace(c_item_template, char_table(
+    htp.p(utl_text.bulk_replace(C_ITEM_TEMPLATE, char_table(
             '#REGION_STATIC_ID#', p_region.static_id)));
 
     -- prepare and add JavaScript to instantiate the plugin
-    l_js := utl_text.bulk_replace(c_js_template, char_table(
+    l_js := utl_text.bulk_replace(C_JS_TEMPLATE, char_table(
               '#REGION_STATIC_ID#', p_region.static_id,
               '#AJAX_IDENTIFIER#', apex_plugin.get_ajax_identifier,
               '#TREE_ACTION#', l_action_type,
@@ -191,31 +176,24 @@ AS
 
     apex_javascript.add_onload_code(p_code => l_js);
     
-    pit.leave_mandatory;
     return l_result;
-  END render_region;
-  -------------------------------------------------------------------------------------------
+  end render_region;
   
   
-  -------------------------------------------------------------------------------------------
-  --  Function: render
-  --
-  --  Historie:
-  --    18.07.2019 J. Sieben: Ersterstellung
-  -------------------------------------------------------------------------------------------  
-  FUNCTION render_item(p_item                IN apex_plugin.t_page_item,
-                       p_plugin              IN apex_plugin.t_plugin,
-                       p_value               IN VARCHAR2,
-                       p_is_readonly         IN BOOLEAN,
-                       p_is_printer_friendly IN BOOLEAN)
-  RETURN apex_plugin.t_page_item_render_result
-  AS
-    c_item_template CONSTANT utl_apex.sql_char := q'^
-    <input id="#ITEM_ID#" name="#ITEM_NAME#" class="text_field apex-item-text #ITEM_CLASSES#" type="text" size="30" maxlength="" style="display:none" value="#VALUE#"/>
-    <div id="#ITEM_ID#_TREE"></div>^';
+  function render_item(
+    p_item in apex_plugin.t_page_item,
+    p_plugin in apex_plugin.t_plugin,
+    p_value in varchar2,
+    p_is_readonly in boolean,
+    p_is_printer_friendly in boolean)
+  return apex_plugin.t_page_item_render_result
+  as
+    C_ITEM_TEMPLATE constant sql_char := 
+      q'^<input id="#ITEM_ID#" name="#ITEM_NAME#" class="text_field apex-item-text #ITEM_CLASSES#" type="text" size="30" maxlength="" style="display:none" value="#VALUE#"/>
+         <div id="#ITEM_ID#_TREE"></div>^';
 
-    c_js_template CONSTANT utl_apex.sql_char := 
-      q'[de.condes.plugin.apexTree.Item('##ITEM_ID#', {
+    C_JS_TEMPLATE constant sql_char := 
+      q'^de.condes.plugin.apexTree.Item('##ITEM_ID#', {
         ajaxIdentifier: '#AJAX_IDENTIFIER#',
         tree$: $('##ITEM_ID#'),
         treeId: '#ITEM_ID#_TREE',
@@ -231,14 +209,12 @@ AS
           },
           data:{}
         }
-      })]';
+      })^';
     
     l_result apex_plugin.t_page_item_render_result;
-    l_js utl_apex.max_char;
-    l_icon_type p_item.attribute_02%TYPE;
-  BEGIN
-    pit.enter_mandatory;
-    
+    l_js max_char;
+    l_icon_type p_item.attribute_02%type;
+  begin
     apex_plugin_util.debug_page_item(
       p_plugin => p_plugin,
       p_page_item => p_item,
@@ -250,95 +226,62 @@ AS
     l_icon_type := p_item.attribute_02;
       
     -- write HTML code
-    htp.p(utl_text.bulk_replace(c_item_template, char_table(
+    htp.p(utl_text.bulk_replace(C_ITEM_TEMPLATE, char_table(
             '#ITEM_ID#', p_item.name,
-            '#ITEM_NAME#', apex_plugin.get_input_name_for_page_item(FALSE),
+            '#ITEM_NAME#', apex_plugin.get_input_name_for_page_item(false),
             '#ITEM_CLASSES#', p_item.element_css_classes,
             '#VALUE#', p_value)));
 
     -- prepare and add JavaScript to instantiate the plugin
-    l_js := utl_text.bulk_replace(c_js_template, char_table(
+    l_js := utl_text.bulk_replace(C_JS_TEMPLATE, char_table(
               '#AJAX_IDENTIFIER#', apex_plugin.get_ajax_identifier,
               '#CASCADING_LOV#', p_item.lov_cascade_parent_items,
-              '#TREE_ACTION#', NULL,
+              '#TREE_ACTION#', null,
               '#ICON_TYPE#', l_icon_type,
               '#ITEMS_TO_SUBMIT#', p_item.ajax_items_to_submit,
               '#ITEM_ID#', p_item.name));
 
     apex_javascript.add_onload_code(p_code => l_js);
     
-    pit.leave_mandatory;
-    RETURN l_result;
-  END render_item;
-  -------------------------------------------------------------------------------------------
+    return l_result;
+  end render_item;
   
   
-  -------------------------------------------------------------------------------------------
-  --  Function: render
-  --
-  --  Historie:
-  --    18.07.2019 J. Sieben: Ersterstellung
-  -------------------------------------------------------------------------------------------  
-  FUNCTION validate_item (
-    p_item   IN apex_plugin.t_page_item,
-    p_plugin IN apex_plugin.t_plugin,
-    p_value  IN VARCHAR2 )
-    RETURN apex_plugin.t_page_item_validation_result
-  AS
+  function validate_item (
+    p_item in apex_plugin.t_page_item,
+    p_plugin in apex_plugin.t_plugin,
+    p_value in varchar2 )
+  return apex_plugin.t_page_item_validation_result
+  as
     l_result apex_plugin.t_page_item_validation_result;
-  BEGIN
-    pit.enter_mandatory;
-    
-    -- Stub, derzeit nicht genutzt
-    
-    pit.leave_mandatory;
-    RETURN l_result;
-  END validate_item;
-  -------------------------------------------------------------------------------------------
+  begin
+    -- Stub
+    return l_result;
+  end validate_item;
   
   
-  -------------------------------------------------------------------------------------------
-  --  Function: render
-  --
-  --  Historie:
-  --    18.07.2019 J. Sieben: Ersterstellung
-  -------------------------------------------------------------------------------------------  
-  FUNCTION refresh_region(p_region IN apex_plugin.t_region,
-                          p_plugin IN apex_plugin.t_plugin )
-  RETURN apex_plugin.t_region_ajax_result
-  AS
+  function refresh_region(
+    p_region in apex_plugin.t_region,
+    p_plugin in apex_plugin.t_plugin)
+  return apex_plugin.t_region_ajax_result
+  as
     l_result apex_plugin.t_region_ajax_result;
-  BEGIN
-    pit.enter_mandatory;
-    
+  begin
     print_json(p_stmt => p_region.source);
-    
-    pit.leave_mandatory;
-    RETURN l_result;
-  END refresh_region;
-  -------------------------------------------------------------------------------------------
+    return l_result;
+  end refresh_region;
   
   
-  -------------------------------------------------------------------------------------------
-  --  Function: render
-  --
-  --  Historie:
-  --    18.07.2019 J. Sieben: Ersterstellung
-  -------------------------------------------------------------------------------------------  
-  FUNCTION refresh_item(p_item   IN apex_plugin.t_page_item,
-                        p_plugin IN apex_plugin.t_plugin )
-  RETURN apex_plugin.t_page_item_ajax_result
-  AS
+  function refresh_item(
+    p_item in apex_plugin.t_page_item,
+    p_plugin in apex_plugin.t_plugin )
+  return apex_plugin.t_page_item_ajax_result
+  as
     l_result apex_plugin.t_page_item_ajax_result;
-  BEGIN
-    pit.enter_mandatory;
-    
+  begin
     print_json(p_stmt => p_item.lov_definition);
-    
-    pit.leave_mandatory;
-    RETURN l_result;
-  END refresh_item;
-  -------------------------------------------------------------------------------------------
+    return l_result;
+  end refresh_item;
 
-END plugin_apex_tree;
+end plugin_apex_tree;
 /
