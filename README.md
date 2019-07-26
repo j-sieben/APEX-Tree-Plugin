@@ -27,3 +27,5 @@ Some functionality of the original `apex.treeView` is not supported when using t
 The installation is not that condensed as you may be used to from other plugins. The code is separated into database packages, the files are separate from the plugin to be copied to the web server. You may decide to throw anything together on the page, but I don't like that approach and don't want to support it.
 
 Therefore you need to download the plugin, install the packages, import the plugin and copy the files to the web folder. There is a need to adjust the file path settings. This can be done after importing the plugins by adjusting the `File Prefix` attribute. I normally have folders for `css` and `js`. If you don't follow that route, you have to adjust the file pathes as well.
+
+The plugin has a dependency to my `UTL_TEXT` package, espacially to the `BULK_REPLACE` method. You can donwload `UTL_TEXT` [here](https://github.com/j-sieben/UTL_TEXT), roll your own bulk replace method or simply replace the calls with a nested `REPLACE`.
