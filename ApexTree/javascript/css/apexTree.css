@@ -1,0 +1,27 @@
+.treeSelCheck {
+    display: inline-block;
+    font: normal normal normal 14px/1 FontAwesome;
+    text-rendering: auto;
+    width: 14px;
+    margin-right: 4px;
+    cursor: default;
+}
+
+/* fa-square-o */
+.treeSelCheck::before {
+    content: "\f096";
+}
+
+/* fa-check-square-o */
+
+.fullChecked.treeSelCheck::before {
+    content: "\f046";
+}
+
+.partChecked.treeSelCheck::before {
+    content: "\f0c8";
+}
+
+span.a-Icon.icon-tree-folder {
+    display: none ;
+}
