@@ -74,6 +74,10 @@ as
     l_prev_node_level number := 1;
   begin
     l_tree_tab := get_data(p_stmt);
+    
+    if l_tree_tab.count = 0 then
+      raise NO_DATA_FOUND;
+    end if;
 
     apex_json.open_object;    
     apex_json.open_object('config');
@@ -119,6 +123,16 @@ as
 
     apex_json.close_all;
   end print_json;
+  
+  
+  procedure print_no_data_found(
+    p_message in varchar2)
+  as
+  begin
+    apex_json.open_object;
+    apex_json.write('message', p_message);  
+    apex_json.close_object;    
+  end print_no_data_found;
   
   
   /* INTERFACE */
@@ -223,7 +237,7 @@ as
       p_is_printer_friendly => p_is_printer_friendly);
       
     -- Map attributes to local variables
-    l_icon_type := p_item.attribute_02;
+    l_icon_type := p_item.attribute_01;
       
     -- write HTML code
     htp.p(utl_text.bulk_replace(C_ITEM_TEMPLATE, char_table(
@@ -269,6 +283,10 @@ as
   begin
     print_json(p_stmt => p_region.source);
     return l_result;
+  exception
+    when NO_DATA_FOUND then
+      print_no_data_found(p_region.no_data_found_message);
+      return l_result;
   end refresh_region;
   
   
@@ -278,9 +296,15 @@ as
   return apex_plugin.t_page_item_ajax_result
   as
     l_result apex_plugin.t_page_item_ajax_result;
+    l_no_data_found_message sql_char;
   begin
+    l_no_data_found_message := p_item.attribute_02;
     print_json(p_stmt => p_item.lov_definition);
     return l_result;
+  exception
+    when NO_DATA_FOUND then
+      print_no_data_found(l_no_data_found_message);
+      return l_result;
   end refresh_item;
 
 end plugin_apex_tree;

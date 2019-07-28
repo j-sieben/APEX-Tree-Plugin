@@ -30,13 +30,15 @@ begin
 wwv_flow_api.create_plugin(
  p_id=>wwv_flow_api.id(14667037343534057)
 ,p_plugin_type=>'REGION TYPE'
-,p_name=>'DE.CONDES.PLUGIN.APEXTREEREGION'
+,p_name=>'DE.CONDES.PLUGIN.APEXTREE.REGION'
 ,p_display_name=>'APEX Tree Region'
 ,p_supported_ui_types=>'DESKTOP'
+,p_image_prefix=>'/de/condes/plugin/apexTree/v5_0/'
 ,p_javascript_file_urls=>wwv_flow_utilities.join(wwv_flow_t_varchar2(
-'/de/condes/plugin/apexTree/js/treeViewWrapper.js',
-'/de/condes/plugin/apexTree/js/Region.js'))
-,p_css_file_urls=>'/de/condes/plugin/apexTree/css/apexTree.css'
+'#PLUGIN_FILES#js/treeViewWrapper.js',
+'#PLUGIN_FILES#js/Region.js',
+'#IMAGE_PREFIX#libraries/apex/#MIN_DIRECTORY#widget.treeView#MIN#.js'))
+,p_css_file_urls=>'#PLUGIN_FILES#css/apexTree.css'
 ,p_render_function=>'plugin_apex_tree.render_region'
 ,p_ajax_function=>'plugin_apex_tree.refresh_region'
 ,p_standard_attributes=>'SOURCE_SQL:SOURCE_REQUIRED:AJAX_ITEMS_TO_SUBMIT:NO_DATA_FOUND_MESSAGE'
@@ -67,7 +69,7 @@ wwv_flow_api.create_plugin_attribute(
 ,p_prompt=>'Activate Action with'
 ,p_attribute_type=>'SELECT LIST'
 ,p_is_required=>true
-,p_default_value=>'SINGLE'
+,p_default_value=>'S'
 ,p_is_translatable=>false
 ,p_lov_type=>'STATIC'
 );

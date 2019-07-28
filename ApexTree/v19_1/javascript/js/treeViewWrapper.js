@@ -31,7 +31,9 @@ de.condes.plugin.apexTree.treeViewWrapper = de.condes.plugin.apexTree.treeViewWr
     C_TREE_CHECK_CLASS = 'treeSelCheck',
     C_TREE_CHECK_SELECTOR = '.' + C_TREE_CHECK_CLASS,
     C_TREE_FULL_CHECK_CLASS = 'fullChecked',
-    C_TREE_PART_CHECK_CLASS = 'partChecked',
+    C_TREE_PART_CHECK_CLASS = 'fa-pie-chart-',
+    C_FLOATING_LABEL_CLASS = '.t-Form-fieldContainer--floatingLabel',
+    C_FLOATING_TREE_CLASS = 'apex-item-wrapper--select-list js-show-label',
     C_APEX_AFTER_REFRESH_EVENT = 'apexafterrefresh',
     C_EXPAND_SELECTED_NODES = true,
     C_UNCHECKED = 0,
@@ -77,7 +79,9 @@ de.condes.plugin.apexTree.treeViewWrapper = de.condes.plugin.apexTree.treeViewWr
             loadingIndicatorPosition: 'centered'
           });
 
-    promise.done(function(data){refreshCallback(data, pTreeId);});
+    promise
+      .done(function(data){refreshCallback(data, pTreeId);})
+      .fail(function(data){failureCallback(data);});
   }; // tree.refresh
   
   
@@ -119,17 +123,20 @@ de.condes.plugin.apexTree.treeViewWrapper = de.condes.plugin.apexTree.treeViewWr
     getOptions(pTreeId);
     if (typeof options.tree$.treeView.data == 'undefined') {
       treeOptions = {
-        multiple: options.withCheckboxes
+        navigation: !options.withCheckboxes,
+        multiple: false,
+        showRoot: options.data.config.rootAdded,
+        doubleClick: options.treeAction,
+        iconType: options.iconType
       };
       
       apex.widget.tree.init(
-        options.treeId, treeOptions, options.data, options.treeAction, options.treeValueItem, 
-        options.data.config.hasIdentity, options.data.config.rootAdded, options.hasTooltips, options.iconType);
+        options.treeId, options.data, options.data.config.hasIdentity, treeOptions);
       options.tree$ = $(`#${options.treeId}`);
-    }
+    };
     
-    // Refresh-Methode an Region binden
-    $('#' + options.treeId).on('apexrefresh', options.refresh);
+    // bind events
+    $('#' + options.treeId).off('apexrefresh').on('apexrefresh', options.refresh);
     
     configureCheckboxes(pTreeId);
   }; // configureTreeInstance
@@ -144,6 +151,11 @@ de.condes.plugin.apexTree.treeViewWrapper = de.condes.plugin.apexTree.treeViewWr
       options.tree$
         .off('click', C_TREE_CHECK_SELECTOR)
         .on('click', C_TREE_CHECK_SELECTOR, function(event){checkSelectorCallback(event, pTreeId)});
+        
+      // Checkboxes are used with the item plugin. In order to incorporate those into the new floating label effect,
+      // we need to add classes to the hosting divs
+      $(`#${options.treeValueItem}`).parents(C_FLOATING_LABEL_CLASS).removeClass(C_FLOATING_TREE_CLASS).addClass(C_FLOATING_TREE_CLASS);
+      
     };
   }; // configureCheckboxes
   
@@ -164,7 +176,7 @@ de.condes.plugin.apexTree.treeViewWrapper = de.condes.plugin.apexTree.treeViewWr
   }; // getCheckedNodes
   
   
-  /* EVENT HANLDERS */
+  /* EVENT HANDLERS */
   function refreshCallback(pData, pTreeId){
     var nodeAdapter,
         state = {
@@ -176,13 +188,16 @@ de.condes.plugin.apexTree.treeViewWrapper = de.condes.plugin.apexTree.treeViewWr
     getOptions(pTreeId);
     
     // Keine Daten gefunden
-    if ($.isEmptyObject(pData.data)) {
+    if ($.isEmptyObject(pData.data) || pData.message) {
       options.tree$.treeView('destroy');
       options.setValueCallback([]);
-      configureTreeInstance(options);
+      $(`#${options.treeId}`).html(`<span class="display_only apex-item-display-only">${pData.message}</span>`);
       options.tree$.trigger(C_APEX_AFTER_REFRESH_EVENT);
       return;
     };
+    
+    configureTreeInstance(pTreeId); 
+    options.tree$.treeView('refresh');
     
     persistState(options.tree$, state);
 
@@ -197,6 +212,11 @@ de.condes.plugin.apexTree.treeViewWrapper = de.condes.plugin.apexTree.treeViewWr
     
     options.tree$.trigger(C_APEX_AFTER_REFRESH_EVENT);
   }; // refreshCallback
+  
+  
+  function failureCallback(data){
+    console.log(data.responseJSON.error);
+  } // failureCallback
 
 
   function checkSelectorCallback(pEvent, pTreeId){    
@@ -321,6 +341,11 @@ de.condes.plugin.apexTree.treeViewWrapper = de.condes.plugin.apexTree.treeViewWr
   };
   
   
+  function getCheckPercentage(pLeaves, pChecked){
+    return (Math.ceil(((pChecked / pLeaves) * 100)/5) * 5).toString();
+  }
+  
+  
   /** Render method for the apex.treeView
    * <p>This method is used to render the node content.
    * @method renderNodeContent
@@ -361,7 +386,7 @@ de.condes.plugin.apexTree.treeViewWrapper = de.condes.plugin.apexTree.treeViewWr
         cssClass += C_TREE_FULL_CHECK_CLASS;
         break;
       default:
-        cssClass += C_TREE_PART_CHECK_CLASS;
+        cssClass += C_TREE_PART_CHECK_CLASS + getCheckPercentage(pNode.checkedStatus.leaves, pNode.checkedStatus.checkedLeaves);
     };
                            
     pOut.markup('<span ')
@@ -441,7 +466,11 @@ de.condes.plugin.apexTree.treeViewWrapper = de.condes.plugin.apexTree.treeViewWr
     $(treeNode)
       .children(C_TREE_CHECK_SELECTOR)
       .removeClass(C_TREE_FULL_CHECK_CLASS)
-      .removeClass(C_TREE_PART_CHECK_CLASS);
+      .removeClass(function (index, className) {
+        var classes;
+        classes = className.match(new RegExp("\\S*" + C_TREE_PART_CHECK_CLASS + "\\S*", 'g')) || [];
+        return classes.join(' ');
+      });
       
     if(pNode.checkedStatus.checkedLeaves > 0){
       pTree.treeView('expand', treeNode);
@@ -454,7 +483,7 @@ de.condes.plugin.apexTree.treeViewWrapper = de.condes.plugin.apexTree.treeViewWr
       else {
         $(treeNode)
           .children(C_TREE_CHECK_SELECTOR)
-          .addClass(C_TREE_PART_CHECK_CLASS);
+          .addClass(C_TREE_PART_CHECK_CLASS + getCheckPercentage(pNode.checkedStatus.leaves, pNode.checkedStatus.checkedLeaves));
       };
     }
     else{

@@ -30,13 +30,15 @@ begin
 wwv_flow_api.create_plugin(
  p_id=>wwv_flow_api.id(14626671305323684)
 ,p_plugin_type=>'ITEM TYPE'
-,p_name=>'DE.CONDES.PLUGIN-APEXTREE'
+,p_name=>'DE.CONDES.PLUGIN.APEXTREE.ITEM'
 ,p_display_name=>'APEX Tree Item'
 ,p_supported_ui_types=>'DESKTOP'
+,p_image_prefix=>'/de/condes/plugin/apexTree/v5_0/'
 ,p_javascript_file_urls=>wwv_flow_utilities.join(wwv_flow_t_varchar2(
-'/de/condes/plugin/apexTree/js/treeViewWrapper.js',
-'/de/condes/plugin/apexTree/js/Item.js'))
-,p_css_file_urls=>'/de/condes/plugin/apexTree/css/apexTree.css'
+'#PLUGIN_FILES#js/treeViewWrapper.js',
+'#PLUGIN_FILES#js/Item.js',
+'#IMAGE_PREFIX#libraries/apex/#MIN_DIRECTORY#widget.treeView#MIN#.js'))
+,p_css_file_urls=>'#PLUGIN_FILES#css/apexTree.css'
 ,p_render_function=>'plugin_apex_tree.render_item'
 ,p_ajax_function=>'plugin_apex_tree.refresh_item'
 ,p_validation_function=>'plugin_apex_tree.validate_item'
@@ -69,8 +71,8 @@ wwv_flow_api.create_plugin_attribute(
  p_id=>wwv_flow_api.id(14627241895369432)
 ,p_plugin_id=>wwv_flow_api.id(14626671305323684)
 ,p_attribute_scope=>'COMPONENT'
-,p_attribute_sequence=>2
-,p_display_sequence=>20
+,p_attribute_sequence=>1
+,p_display_sequence=>10
 ,p_prompt=>'Icon Type'
 ,p_attribute_type=>'TEXT'
 ,p_is_required=>false
@@ -79,6 +81,20 @@ wwv_flow_api.create_plugin_attribute(
 ,p_is_translatable=>false
 ,p_help_text=>'<p>A CSS class used to specify the type of icons used for all nodes. This class is used in CSS rules to specify properties for all icons of that type. The icon type along with the value of the icon column of the region source determines the icon used'
 ||' for each node.</p>'
+);
+wwv_flow_api.create_plugin_attribute(
+ p_id=>wwv_flow_api.id(14627241895369433)
+,p_plugin_id=>wwv_flow_api.id(14626671305323684)
+,p_attribute_scope=>'COMPONENT'
+,p_attribute_sequence=>2
+,p_display_sequence=>20
+,p_prompt=>'No Data found message'
+,p_attribute_type=>'TEXT'
+,p_is_required=>false
+,p_default_value=>'No data found.'
+,p_supported_ui_types=>'DESKTOP'
+,p_is_translatable=>true
+,p_help_text=>'<p>Defines a message that is shown if no data are found. Comparable to the respective attribute in region types.</p>'
 );
 end;
 /
