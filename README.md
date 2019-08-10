@@ -3,9 +3,9 @@
 
 ## Background
 
-It all started with the requirement to collect authorization rights for applications to combine them to roles. It was found that a tree view would be an easy option to achieve that. I started working with the `apex.treeView` implementation. As a matter of fact we developed the solution for Apex 5.0 where it is not that easy to add checkboxes to the treeas it is today. But this has been done several times. I began with the implementation of [Ezhik](https://ezhikorn.wordpress.com/2017/10/18/apex-5-treeview-true-checkbox/) who in turn based his work on Jon Snyders blog around that topic.
+It all started with the requirement to collect authorization rights for applications to combine them to roles. It was found that a tree view would be an easy option to achieve that. I started working with the `apex.treeView` implementation. As a matter of fact we developed the solution for Apex 5.0 where it is not that easy to add checkboxes to the tree as it is today. And even today checkboxes don't support real tristate checkboxes. But this has been done several times. I digged into the implementation of [Ezhik](https://ezhikorn.wordpress.com/2017/10/18/apex-5-treeview-true-checkbox/) who in turn based his work on Jon Snyders blog around that topic.
 
-I then found it cumbersome that the apex.treeView does not supprt AJAX refreshes, so when choosing a different application, I will have to refresh the whole page. To overcome this, I looked into the work of [mennooo](https://github.com/mennooo/orclapex-treeview-refresh) who digged into refreshing the `apex.treeView` dynamically.
+I then found it cumbersome that the apex.treeView does not supprt AJAX refreshes, forcing me to refresh the whole page if a different application is chosen. To overcome this, I looked into the work of [mennooo](https://github.com/mennooo/orclapex-treeview-refresh) who solved this issue and refreshes `apex.treeView` dynamically.
 
 I learned a lot from their work but at the end I felt something different had to be done. I didn't really liked mennooo's approach of creating a dynamic action plugin to enable the tree to refresh and thought it should be possible to have both options (refresh and checkboxes) in one plugin.
 
@@ -15,7 +15,7 @@ I decided to create two plugins based on one JavaScript file which in essence is
 * A region plugin with the ability to dynamically refresh the tree
 * An item plugin that encapsulates `apex.treeView` as a page item and allows to select entries with checkboxes.
 
-The item plugin is especially useful as I strongly dislike the idea of having a region with a value. Using `apex.treeView` as the basis for a normal page item makes it something like the shuttle control. It's very easy to integrate into the page as it has a setValue, getValue method, allows for cascading lov support and so on. The page item will send the id list of the selected leafs using the same mechanism like a shuttle control: as a colon separated list of IDs.
+The item plugin is especially useful as I strongly dislike the idea of having a region with a value. Using `apex.treeView` as the basis for a normal page item makes it something like the shuttle control. It's very easy to integrate into the page as it has a setValue, getValue method, allows for cascading lov support and so on. The page item will send the id list of the selected leafs using the same mechanism a shuttle control uses: as a colon separated list of IDs.
 
 The region plugin is refreshable which comes in handy if you want to edit the entries by clicking on them. The region automatically binds to the `apexafterdialogclose` event and refreshes itself, maintaining its visual state. I really like this approach from mennooo. As mennooo pointed out, you need to create links by calling the `apex_util.prepare_url`. This method allows to set the triggering item. This item should be set to the `static region id` you define for your region plugin.
 
