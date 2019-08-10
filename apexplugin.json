@@ -13,11 +13,11 @@
     "name" : "Jürgen Sieben",
     "email" : "team@condes.de",
     "url" : "http://condes.de/",
-    "donationUrl" : "https://www.paypal.me/siebenj"
+    "donationUrl" : "https://www.paypal.me/siebenj/3"
   },
   "repository" : {
     "type" : "git",
-    "url" : "https://github.com/j-sieben/APEX-Tree-Plugin.git"
+    "url" : "https://github.com/j-sieben/APEX-Tree-Plugin"
   },
   "oracle" : {
     "versions" : ["12.2.0.1", "18.3.0.1"],
