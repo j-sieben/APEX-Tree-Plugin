@@ -19,6 +19,8 @@ The item plugin is especially useful as I strongly dislike the idea of having a 
 
 The region plugin is refreshable which comes in handy if you want to edit the entries by clicking on them. The region automatically binds to the `apexafterdialogclose` event and refreshes itself, maintaining its visual state. I really like this approach from mennooo. As mennooo pointed out, you need to create links by calling the `apex_util.prepare_url`. This method allows to set the triggering item. This item should be set to the `static region id` you define for your region plugin.
 
+I created two versions of the plugin, one for APEX 5.0 (my client still uses this version) and 19.1. I tried my best to support the respective Universal theme. If something is missing, just give me a notice.
+
 ## Differences
 
 Some functionality of the original `apex.treeView` is not supported when using the plugins. If you use the region plugin, it does not support having a page item to hold the values, as this is achieved with the page item plugin. The page item plugin on the other hand does not support links, as I found it strange that a page item calls other pages when selecting values. Obviously the plugin does not support the legacy `jsTree` anymore.
