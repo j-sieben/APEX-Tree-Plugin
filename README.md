@@ -5,7 +5,7 @@
 
 It all started with the requirement to collect authorization rights for applications to combine them to roles. It was found that a tree view would be an easy option to achieve that. I started working with the `apex.treeView` implementation. As a matter of fact we developed the solution for Apex 5.0 where it is not that easy to add checkboxes to the tree as it is today. And even today checkboxes don't support real tristate checkboxes. But this has been done several times. I digged into the implementation of [Ezhik](https://ezhikorn.wordpress.com/2017/10/18/apex-5-treeview-true-checkbox/) who in turn based his work on Jon Snyders [blog](http://hardlikesoftware.com/weblog/2017/04/12/add-checkbox-selection-to-apex-tree-region/) around that topic.
 
-I then found it cumbersome that the apex.treeView does not supprt AJAX refreshes, forcing me to refresh the whole page if a different application is chosen. To overcome this, I looked into the work of [mennooo](https://github.com/mennooo/orclapex-treeview-refresh) who solved this issue and refreshes `apex.treeView` dynamically.
+I then found it cumbersome that the `apex.treeView` does not supprt AJAX refreshes, forcing me to refresh the whole page if a different application is chosen. To overcome this, I looked into the work of [mennooo](https://github.com/mennooo/orclapex-treeview-refresh) who solved this issue and refreshes `apex.treeView` dynamically.
 
 I learned a lot from their work but at the end I felt something different had to be done. I didn't really liked mennooo's approach of creating a dynamic action plugin to enable the tree to refresh and thought it should be possible to have both options (refresh and checkboxes) in one plugin.
 
