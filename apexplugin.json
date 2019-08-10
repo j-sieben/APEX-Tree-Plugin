@@ -26,9 +26,9 @@
       "versions" : ["5.0.0"],
       "plugin" : {
         "internalName" : "DE.DANIELH.GT.NEWINSTANCE",
-        "type" : "dynamic action",
-        "demo" : "https://apex.oracle.com/pls/apex/f?p=57743:1",
-        "previewImage" : "https://raw.githubusercontent.com/Dani3lSun/apex-plugin-guidedtour/master/preview.png"
+        "type" : "item",
+        "demo" : "",
+        "previewImage" : "https://github.com/j-sieben/APEX-Tree-Plugin/master/preview.png"
       }
     }
   }
