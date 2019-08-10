@@ -26,7 +26,6 @@
       "plugin" : {
         "internalName" : "DE.CONDES.PLUGIN.APEXTREE.ITEM",
         "type" : "item",
-        "demo" : "",
         "previewImage" : "https://github.com/j-sieben/APEX-Tree-Plugin/master/preview.png"
       }
     }
