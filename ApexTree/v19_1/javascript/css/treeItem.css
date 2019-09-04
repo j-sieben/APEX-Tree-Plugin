@@ -1,0 +1,47 @@
+.a-TreeView-checkBox {
+  display: inline-block;
+  vertical-align: top;
+  position: relative;
+  width: 16px;
+  height: 16px;
+  border: 1px solid silver;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.075);
+  background-color: #fff;
+  padding: 1px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: 'Font APEX Small'!important;
+  font-style: normal!important;
+  font-weight: 400!important;
+  font-variant: normal!important;
+  text-transform: none!important;
+  speak: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* fa-square-o */
+.a-TreeView-checkBox::before {
+    content: "";
+}
+
+/* fa-check-square-o */
+
+.a-TreeView-checkBox--fullChecked.a-TreeView-checkBox::before {
+  content: "\f00c";
+}
+
+.a-TreeView-checkBox--partChecked.a-TreeView-checkBox::before {
+  content: "\f10c";
+  size:9pt;
+}
+
+
+span.a-Icon.icon-tree-folder {
+  display: none ;
+}
+
+span.a-TreeView-icon{
+  padding-left: 4px;
+}
