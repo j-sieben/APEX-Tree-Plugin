@@ -1,8 +1,8 @@
-create or replace package body plugin_apex_tree
+create or replace package body plugin_tree_item
 as
   
   subtype sql_char is varchar2(4000 byte);
-  subtype max_char is varchar2(32767);
+  subtype max_char is varchar2(32767 byte);
 
   type tree_rec is record (
     node_status number,
@@ -63,13 +63,35 @@ as
   end get_data;
   
   
+  /** Method to emit standard output if no data could be found */
+  procedure print_no_data_found
+  as
+  begin
+    apex_json.open_object;    
+    apex_json.open_object('config');
+    apex_json.write('hasIdentity', false);
+    apex_json.write('rootAdded', false);  
+    apex_json.close_object;  
+    
+    apex_json.open_object('data');
+      apex_json.write('selectedNodes', to_char(null));
+    apex_json.close_all;
+  end print_no_data_found;
+  
+  
   /** Method to emit the retrieved data as a JSON data stream
-   * @param [p_stmt]      SQL statement to retrieve the hierachical values.
+   * @param [p_stmt] SQL statement to retrieve the hierachical values.
    * @usage  Is used to convert the result of GET_DATA to JSON and print it to the http stream
    */
   procedure print_json (
-    p_stmt in varchar2)
+    p_stmt in varchar2,
+    p_values in varchar2)
   as
+    cursor value_cur(p_values in varchar2)
+    is
+    select column_value val
+      from table(utl_text.string_to_table(p_values, ':'));
+      
     l_tree_tab tree_tab;
     l_prev_node_level number := 1;
   begin
@@ -84,7 +106,14 @@ as
     apex_json.write('hasIdentity', g_has_identity);
     apex_json.write('rootAdded', g_root_count > 1);  
     apex_json.close_object;    
+    
     apex_json.open_object('data');
+    
+    apex_json.open_array('selectedNodes');  
+    for v in value_cur(p_values) loop
+      apex_json.write(v.val);
+    end loop;
+    apex_json.close_array;
 
     if g_root_count > 1 then    
       apex_json.write('id', 'root0');
@@ -125,197 +154,100 @@ as
   end print_json;
   
   
-  procedure print_no_data_found(
-    p_message in varchar2)
-  as
-  begin
-    apex_json.open_object;
-    apex_json.write('message', p_message);  
-    apex_json.close_object;    
-  end print_no_data_found;
-  
-  
   /* INTERFACE */
-  function render_region(
-    p_region in apex_plugin.t_region,
+  function render(
+    p_item in apex_plugin.t_page_item,
     p_plugin in apex_plugin.t_plugin,
+    p_value in varchar2,
+    p_is_readonly in boolean,
     p_is_printer_friendly in boolean)
-  return apex_plugin.t_region_render_result
-  as
-    C_REGION_TEMPLATE constant sql_char := 
-      q'^<div id="#REGION_STATIC_ID#"><div id="#REGION_STATIC_ID#_TREE"></div></div>^';
-
-    C_JS_TEMPLATE constant sql_char := 
-      q'^de.condes.plugin.apexTree.Region('##REGION_STATIC_ID#', {
-        ajaxIdentifier: '#AJAX_IDENTIFIER#',
-        tree$: $('##REGION_STATIC_ID#_TREE'),
-        treeId: '#REGION_STATIC_ID#_TREE',
-        treeAction: #TREE_ACTION#,
-        itemsToSubmit: [#ITEMS_TO_SUBMIT|'|'|#],
-        iconType: '#ICON_TYPE#',
-        data:{
-          config:{
-            hasIdentity:true,
-            rootAdded:#SHOW_ROOT#
-          },
-          data:{}
-        }
-      })^';
-    
-    l_result apex_plugin.t_region_render_result;
-    l_js max_char;
-    l_action_type p_region.attribute_01%type;
-    l_icon_type p_region.attribute_02%type;
-  begin
-  
-    apex_plugin_util.debug_region(
-      p_plugin => p_plugin,
-      p_region => p_region,
-      p_is_printer_friendly => p_is_printer_friendly);
-      
-    -- Map attributes to local variables
-    l_action_type := p_region.attribute_01;
-    l_icon_type := p_region.attribute_02;
-      
-    htp.p(utl_text.bulk_replace(C_REGION_TEMPLATE, char_table(
-            '#REGION_STATIC_ID#', p_region.static_id)));
-
-    -- prepare and add JavaScript to instantiate the plugin
-    l_js := utl_text.bulk_replace(C_JS_TEMPLATE, char_table(
-              '#REGION_STATIC_ID#', p_region.static_id,
-              '#AJAX_IDENTIFIER#', apex_plugin.get_ajax_identifier,
-              '#TREE_ACTION#', case l_action_type when 'D' then '''activate''' else 'false' end,
-              '#ICON_TYPE#', l_icon_type,
-              '#SHOW_ROOT#', case g_root_count when 1 then 'false' else 'true' end,
-              '#ITEMS_TO_SUBMIT#', p_region.ajax_items_to_submit));
-
-    apex_javascript.add_onload_code(p_code => l_js);
-    
-    return l_result;
-  end render_region;
-  
-  
-  procedure render_item (
-    p_item in apex_plugin.t_item,
-    p_plugin in apex_plugin.t_plugin,
-    p_param in apex_plugin.t_item_render_param,
-    p_result in out nocopy apex_plugin.t_item_render_result)
+  return apex_plugin.t_page_item_render_result
   as
     C_ITEM_TEMPLATE constant sql_char := 
       q'^<div id="#ITEM_ID#_CONTAINER" class="apex-item-tree">
            <input id="#ITEM_ID#" name="#ITEM_NAME#" class="selectlist #ITEM_CLASSES#" type="text" size="30" maxlength="" style="display:none" value="#VALUE#"/>
-           <div id="#ITEM_ID#_TREE" class="apex-item-tree--tree"/>
+           <div id="#ITEM_ID#_TREE"/>
          </div>^';
 
     C_JS_TEMPLATE constant sql_char := 
       q'^de.condes.plugin.widget.treeItem('##ITEM_ID#', {}, {
         ajaxIdentifier: '#AJAX_IDENTIFIER#',
         pageItemsToSubmit: [#CASCADING_LOV|'|'|##ITEMS_TO_SUBMIT|,'|'|#],
-        optimizeRefresh: true,
+        noDataFoundMessage: '#NO_DATA_FOUND#',
+        expandLevel: #EXPAND_LEVEL#,
+        optimizeRefresh: #OPTIMIZE_REFRESH#,
         dependingOnSelector: '##CASCADING_LOV#',
         treeId: '#ITEM_ID#_TREE',
         nodeHasTooltip: true
       })^';
-    /*  
-        tree$: $('##ITEM_ID#'),
-        optimizeRefresh: true,
-        cascadingLovSelector:'##CASCADING_LOV#',
-        iconType: '#ICON_TYPE#',
-        data:{
-          config:{
-            hasIdentity:true,
-            rootAdded:false
-          },
-          data:{}
-        }*/
     l_js max_char;
-    l_icon_type p_item.attribute_02%type;
+    l_no_data_found_message p_item.attribute_01%type;
+    l_expand_level p_item.attribute_02%type;
+    l_result apex_plugin.t_page_item_render_result;
   begin
     apex_plugin_util.debug_page_item(
       p_plugin => p_plugin,
       p_page_item => p_item,
-      p_value => p_param.value,
-      p_is_readonly => p_param.is_readonly,
-      p_is_printer_friendly => p_param.is_printer_friendly);
+      p_value => p_value,
+      p_is_readonly => p_is_readonly,
+      p_is_printer_friendly => p_is_printer_friendly);
       
     -- Map attributes to local variables
-    l_icon_type := p_item.attribute_01;
+    l_no_data_found_message := p_item.attribute_01;
+    l_expand_level := p_item.attribute_02;
       
     -- write HTML code
     htp.p(utl_text.bulk_replace(C_ITEM_TEMPLATE, char_table(
             '#ITEM_ID#', p_item.name,
             '#ITEM_NAME#', apex_plugin.get_input_name_for_page_item(false),
             '#ITEM_CLASSES#', p_item.element_css_classes,
-            '#VALUE#', p_param.value)));
+            '#VALUE#', p_value)));
 
     -- prepare and add JavaScript to instantiate the plugin
     l_js := utl_text.bulk_replace(C_JS_TEMPLATE, char_table(
               '#AJAX_IDENTIFIER#', apex_plugin.get_ajax_identifier,
               '#CASCADING_LOV#', p_item.lov_cascade_parent_items,
-              '#ICON_TYPE#', l_icon_type,
+              '#NO_DATA_FOUND#', l_no_data_found_message,
+              '#OPTIMIZE_REFRESH#', case when p_item.ajax_optimize_refresh then 'true' else 'false' end,
+              '#EXPAND_LEVEL#', coalesce(l_expand_level, 2), 
               '#SHOW_ROOT#', case g_root_count when 1 then 'false' else 'true' end,
               '#ITEMS_TO_SUBMIT#', p_item.ajax_items_to_submit,
               '#ITEM_ID#', p_item.name));
 
     apex_javascript.add_onload_code(p_code => l_js);
-  end render_item;
+    
+    return l_result;
+  end render;
   
   
-  procedure get_item_metadata (
-    p_item in apex_plugin.t_item,
+  function validate(
+    p_item in apex_plugin.t_page_item,
     p_plugin in apex_plugin.t_plugin,
-    p_param in apex_plugin.t_item_meta_data_param,
-    p_result in out nocopy apex_plugin.t_item_meta_data_result)
+    p_value in varchar2)
+    return apex_plugin.t_page_item_validation_result
   as
     l_result apex_plugin.t_page_item_validation_result;
   begin
     -- Stub
-    null;
-  end get_item_metadata;
+    return l_result;
+  end validate;
   
   
-  procedure validate_item(
-    p_item in apex_plugin.t_item,
-    p_plugin in apex_plugin.t_plugin,
-    p_param in apex_plugin.t_item_validation_param,
-    p_result in out nocopy apex_plugin.t_item_validation_result)
-  as
-  begin
-    -- Stub
-    null;
-  end validate_item;
-  
-  
-  function refresh_region(
-    p_region in apex_plugin.t_region,
+  function refresh(
+    p_item in apex_plugin.t_page_item,
     p_plugin in apex_plugin.t_plugin)
-  return apex_plugin.t_region_ajax_result
+    return apex_plugin.t_page_item_ajax_result
   as
-    l_result apex_plugin.t_region_ajax_result;
+    l_result apex_plugin.t_page_item_ajax_result;
   begin
-    print_json(p_stmt => p_region.source);
+    print_json(
+      p_stmt => p_item.lov_definition,
+      p_values => v(p_item.name));
     return l_result;
   exception
     when NO_DATA_FOUND then
-      print_no_data_found(p_region.no_data_found_message);
+      print_no_data_found;
       return l_result;
-  end refresh_region;
-  
-  
-  procedure refresh_item (
-    p_item in apex_plugin.t_item,
-    p_plugin in apex_plugin.t_plugin,
-    p_param in apex_plugin.t_item_ajax_param,
-    p_result in out nocopy apex_plugin.t_item_ajax_result)
-  as
-    l_no_data_found_message sql_char;
-  begin
-    l_no_data_found_message := p_item.attribute_02;
-    print_json(p_stmt => p_item.lov_definition);
-  exception
-    when NO_DATA_FOUND then
-      print_no_data_found(l_no_data_found_message);
-  end refresh_item;
+  end refresh;
 
-end plugin_apex_tree;
-/
+end plugin_tree_item;
