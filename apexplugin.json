@@ -1,0 +1,33 @@
+{
+  "name" : "APEX-Tree-Item",
+  "version" : "1.0",
+  "description" : "Offers an APEX tree as an item, comparable to a shuttle control to allow to select multiple hierarchical entries with checkboxes",
+  "keywords" : ["tree", "checkbox", "item"],
+  "homepage" : "https://github.com/j-sieben/APEX-Tree-Plugin",
+  "bugs" : {
+    "url" : "https://github.com/j-sieben/APEX-Tree-Plugin/issues",
+    "email" : "team@condes.de"
+  },
+  "license" : "MIT",
+  "author" : {
+    "name" : "Jürgen Sieben",
+    "email" : "team@condes.de",
+    "url" : "http://condes.de/",
+    "donationUrl" : "https://www.paypal.me/siebenj/3"
+  },
+  "repository" : {
+    "type" : "git",
+    "url" : "https://github.com/j-sieben/APEX-Tree-Plugin"
+  },
+  "oracle" : {
+    "versions" : ["12.2.0.1", "18.3.0.1"],
+    "apex" : {
+      "versions" : ["5.0.0", "19.1.0"],
+      "plugin" : {
+        "internalName" : "DE.CONDES.PLUGIN.APEXTREE.ITEM",
+        "type" : "item",
+        "previewImage" : "https://github.com/j-sieben/APEX-Tree-Plugin/master/preview.png"
+      }
+    }
+  }
+}
