@@ -24,7 +24,7 @@ end;
 prompt --application/shared_components/plugins/item_type/de_condes_plugin_apextree_item
 begin
 wwv_flow_api.create_plugin(
- p_id=>wwv_flow_api.id(31688910991280037)
+ p_id=>wwv_flow_api.id(48798498048295055)
 ,p_plugin_type=>'ITEM TYPE'
 ,p_name=>'DE.CONDES.PLUGIN.APEXTREE.ITEM'
 ,p_display_name=>'APEX Tree Item'
@@ -41,7 +41,7 @@ wwv_flow_api.create_plugin(
 ,p_meta_data_function=>'plugin_apex_tree.get_item_metadata'
 ,p_ajax_function=>'plugin_apex_tree.refresh_item'
 ,p_validation_function=>'plugin_apex_tree.validate_item'
-,p_standard_attributes=>'VISIBLE:SESSION_STATE:READONLY:SOURCE:ELEMENT:LOV:CASCADING_LOV:INIT_JAVASCRIPT_CODE'
+,p_standard_attributes=>'VISIBLE:SESSION_STATE:READONLY:SOURCE:ELEMENT:WIDTH:LOV:CASCADING_LOV:INIT_JAVASCRIPT_CODE'
 ,p_substitute_attributes=>true
 ,p_subscribe_plugin_settings=>true
 ,p_help_text=>wwv_flow_string.join(wwv_flow_t_varchar2(
@@ -63,8 +63,8 @@ wwv_flow_api.create_plugin(
 ,p_version_identifier=>'1.0'
 );
 wwv_flow_api.create_plugin_attribute(
- p_id=>wwv_flow_api.id(31689481581325785)
-,p_plugin_id=>wwv_flow_api.id(31688910991280037)
+ p_id=>wwv_flow_api.id(48799068638340803)
+,p_plugin_id=>wwv_flow_api.id(48798498048295055)
 ,p_attribute_scope=>'COMPONENT'
 ,p_attribute_sequence=>1
 ,p_display_sequence=>10
@@ -78,8 +78,8 @@ wwv_flow_api.create_plugin_attribute(
 ||' for each node.</p>'
 );
 wwv_flow_api.create_plugin_attribute(
- p_id=>wwv_flow_api.id(17108881124940804)
-,p_plugin_id=>wwv_flow_api.id(31688910991280037)
+ p_id=>wwv_flow_api.id(34218468181955822)
+,p_plugin_id=>wwv_flow_api.id(48798498048295055)
 ,p_attribute_scope=>'COMPONENT'
 ,p_attribute_sequence=>2
 ,p_display_sequence=>20
@@ -92,8 +92,8 @@ wwv_flow_api.create_plugin_attribute(
 ,p_help_text=>'Defines a message that is shown if no data are found. Comparable to the respective attribute in region types.'
 );
 wwv_flow_api.create_plugin_std_attribute(
- p_id=>wwv_flow_api.id(17076044924162771)
-,p_plugin_id=>wwv_flow_api.id(31688910991280037)
+ p_id=>wwv_flow_api.id(34185631981177789)
+,p_plugin_id=>wwv_flow_api.id(48798498048295055)
 ,p_name=>'INIT_JAVASCRIPT_CODE'
 ,p_is_required=>false
 ,p_supported_ui_types=>'DESKTOP'
@@ -101,8 +101,8 @@ wwv_flow_api.create_plugin_std_attribute(
 ,p_help_text=>'<p>The options you can specify here are the same as with an <pre>apex.treeView</pre> region. Be aware though that some options may not work as expected, as the item plugin overrides some of the default behaviours.</p>'
 );
 wwv_flow_api.create_plugin_std_attribute(
- p_id=>wwv_flow_api.id(17096513449655520)
-,p_plugin_id=>wwv_flow_api.id(31688910991280037)
+ p_id=>wwv_flow_api.id(34206100506670538)
+,p_plugin_id=>wwv_flow_api.id(48798498048295055)
 ,p_name=>'LOV'
 );
 end;
