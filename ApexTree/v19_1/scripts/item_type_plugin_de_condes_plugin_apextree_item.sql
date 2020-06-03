@@ -37,10 +37,10 @@ wwv_flow_api.create_plugin(
 '#IMAGE_PREFIX#libraries/apex/#MIN_DIRECTORY#widget.treeView#MIN#.js'))
 ,p_css_file_urls=>'#PLUGIN_FILES#css/apexTree.css'
 ,p_api_version=>2
-,p_render_function=>'plugin_apex_tree.render_item'
-,p_meta_data_function=>'plugin_apex_tree.get_item_metadata'
-,p_ajax_function=>'plugin_apex_tree.refresh_item'
-,p_validation_function=>'plugin_apex_tree.validate_item'
+,p_render_function=>'plugin_tree_item.render'
+,p_meta_data_function=>'plugin_tree_item.get_metadata'
+,p_ajax_function=>'plugin_tree_item.refresh'
+,p_validation_function=>'plugin_tree_item.validate'
 ,p_standard_attributes=>'VISIBLE:SESSION_STATE:READONLY:SOURCE:ELEMENT:WIDTH:LOV:CASCADING_LOV:INIT_JAVASCRIPT_CODE'
 ,p_substitute_attributes=>true
 ,p_subscribe_plugin_settings=>true

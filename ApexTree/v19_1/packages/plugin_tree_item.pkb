@@ -174,7 +174,7 @@ as
         noDataFoundMessage: '#NO_DATA_FOUND#',
         expandLevel: #EXPAND_LEVEL#,
         optimizeRefresh: #OPTIMIZE_REFRESH#,
-        dependingOnSelector: '##CASCADING_LOV#',
+        dependingOnSelector: '#CASCADING_LOV#',
         treeId: '#ITEM_ID#_TREE',
         nodeHasTooltip: true
       })^';
@@ -203,7 +203,7 @@ as
     -- prepare and add JavaScript to instantiate the plugin
     l_js := utl_text.bulk_replace(C_JS_TEMPLATE, char_table(
               '#AJAX_IDENTIFIER#', apex_plugin.get_ajax_identifier,
-              '#CASCADING_LOV#', p_item.lov_cascade_parent_items,
+              '#CASCADING_LOV#', case when p_item.lov_cascade_parent_items then '#' || p_item.lov_cascade_parent_items end,
               '#NO_DATA_FOUND#', l_no_data_found_message,
               '#OPTIMIZE_REFRESH#', case when p_item.ajax_optimize_refresh then 'true' else 'false' end,
               '#EXPAND_LEVEL#', coalesce(l_expand_level, 2), 
