@@ -32,9 +32,9 @@ wwv_flow_api.create_plugin(
 ,p_supported_component_types=>'APEX_APPLICATION_PAGE_ITEMS:APEX_APPL_PAGE_IG_COLUMNS'
 ,p_image_prefix=>'/de/condes/plugin/apexTree/v19_1/'
 ,p_javascript_file_urls=>wwv_flow_string.join(wwv_flow_t_varchar2(
-'#PLUGIN_FILES#js/treeViewWrapper.js',
+'#IMAGE_PREFIX#libraries/apex/#MIN_DIRECTORY#widget.treeView#MIN#.js',
 '#PLUGIN_FILES#js/Item.js',
-'#IMAGE_PREFIX#libraries/apex/#MIN_DIRECTORY#widget.treeView#MIN#.js'))
+'#PLUGIN_FILES#js/treeViewWrapper.js'))
 ,p_css_file_urls=>'#PLUGIN_FILES#css/apexTree.css'
 ,p_api_version=>2
 ,p_render_function=>'plugin_tree_item.render'
