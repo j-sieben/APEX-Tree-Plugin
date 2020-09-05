@@ -22,7 +22,7 @@ as
   
   /* HELPER */
   /** Method to retrieve the data based on LOV source or region source
-   * @param  p_stmt       SQL statement to retrieve the hierachical values.
+   * @param  p_stmt SQL statement to retrieve the hierachical values.
    * @return PL/SQL table of type TREE_REC with the hierarchical data
    * @usage  This method uses APEX_PLUGIN_UTIL.GET_DATA2 to retrieve the values of the queries
    */
@@ -162,7 +162,7 @@ as
     p_result in out nocopy apex_plugin.t_item_render_result)
   as
     C_ITEM_TEMPLATE constant sql_char := 
-      q'^<div id="#ITEM_ID#_CONTAINER" class="apex-item-tree">
+      q'^<div id="#ITEM_ID#_CONTAINER" class="apex-item-tree col col-12">
            <input id="#ITEM_ID#" name="#ITEM_NAME#" class="selectlist #ITEM_CLASSES#" type="text" size="30" maxlength="" style="display:none" value="#VALUE#"/>
            <div id="#ITEM_ID#_TREE"/>
          </div>^';
@@ -203,7 +203,7 @@ as
     -- prepare and add JavaScript to instantiate the plugin
     l_js := utl_text.bulk_replace(C_JS_TEMPLATE, char_table(
               '#AJAX_IDENTIFIER#', apex_plugin.get_ajax_identifier,
-              '#CASCADING_LOV#', case when p_item.lov_cascade_parent_items then '#' || p_item.lov_cascade_parent_items end,
+              '#CASCADING_LOV#', case when p_item.lov_cascade_parent_items is not null then '#' || p_item.lov_cascade_parent_items end,
               '#NO_DATA_FOUND#', l_no_data_found_message,
               '#OPTIMIZE_REFRESH#', case when p_item.ajax_optimize_refresh then 'true' else 'false' end,
               '#EXPAND_LEVEL#', coalesce(l_expand_level, 2), 
