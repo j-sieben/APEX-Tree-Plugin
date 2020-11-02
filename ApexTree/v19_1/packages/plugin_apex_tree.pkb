@@ -1,6 +1,7 @@
 create or replace package body plugin_apex_tree
 as
-  
+  subtype ora_name_type is varchar2(128 byte);
+  subtype flag_type is varchar2(1 byte);
   subtype sql_char is varchar2(4000 byte);
   subtype max_char is varchar2(32767);
 
@@ -15,51 +16,67 @@ as
 
   type tree_tab is table of tree_rec index by pls_integer;
 
+  type number_list is table of pls_integer index by ora_name_type;
+  
   g_has_identity boolean default true;
   g_root_count number := 1;
   
   C_COLUMN_COUNT constant number := 7;
+  C_YES constant flag_type := 'Y';
+  C_TRUE constant ora_name_type := 'true';
+  C_FALSE constant ora_name_type := 'false';
   
   /* HELPER */
-  /** Method to retrieve the data based on LOV source or region source
-   * @param  p_stmt       SQL statement to retrieve the hierachical values.
+  /** Method to retrieve the data based on APEX_EXEC
+   * @param  p_region  Instance of apex_plugin.t_region with column meta data
    * @return PL/SQL table of type TREE_REC with the hierarchical data
-   * @usage  This method uses APEX_PLUGIN_UTIL.GET_DATA2 to retrieve the values of the queries
+   * @usage  This method uses APEX_EXEC to retrieve the values of the region source
    */
-  function get_data ( 
-    p_stmt in varchar2)
+  function get_data(
+    p_region in apex_plugin.t_region)
     return tree_tab
   as
-    l_source_result apex_plugin_util.t_column_value_list2;
     l_tree_tab tree_tab;
-  begin    
-    -- get hierarchical data
-    l_source_result := apex_plugin_util.get_data2(
-                         p_sql_statement => p_stmt,
-                         p_min_columns => C_COLUMN_COUNT,
-                         p_max_columns => C_COLUMN_COUNT,
-                         p_component_name => null);
-
+    l_context apex_exec.t_context;
+    l_col_idx number_list;
+    l_idx pls_integer := 1;
+  begin
+    
+    -- open context based on settings on the page for the region source
+    l_context := apex_exec.open_query_context;
+                   
+    -- map column names from region attributes to column index numbers
+    l_col_idx('LABEL') := apex_exec.get_column_position(l_context, p_region.attribute_01);
+    l_col_idx('VALUE') := apex_exec.get_column_position(l_context, p_region.attribute_02);
+    l_col_idx('STATUS') := apex_exec.get_column_position(l_context, p_region.attribute_03);
+    l_col_idx('LEVEL') := apex_exec.get_column_position(l_context, p_region.attribute_04);
+    l_col_idx('TOOLTIP') := apex_exec.get_column_position(l_context, p_region.attribute_05);
+    l_col_idx('LINK') := apex_exec.get_column_position(l_context, p_region.attribute_06);
+    l_col_idx('ICON') := apex_exec.get_column_position(l_context, p_region.attribute_08);
+    
     -- copy result to PL/SQL table
-    for idx in 1..l_source_result(1).value_list.count loop    
-      l_tree_tab(idx).node_status := l_source_result(1).value_list(idx).number_value;
-      l_tree_tab(idx).node_level := l_source_result(2).value_list(idx).number_value;
-      l_tree_tab(idx).node_title := apex_plugin_util.get_value_as_varchar2(l_source_result(3).data_type, l_source_result(3).value_list(idx));
-      l_tree_tab(idx).node_icon := apex_plugin_util.get_value_as_varchar2(l_source_result(4).data_type, l_source_result(4).value_list(idx));
-      l_tree_tab(idx).node_value := apex_plugin_util.get_value_as_varchar2(l_source_result(5).data_type, l_source_result(5).value_list(idx));
-      l_tree_tab(idx).node_tooltip := apex_plugin_util.get_value_as_varchar2(l_source_result(6).data_type, l_source_result(6).value_list(idx));
-      l_tree_tab(idx).node_link := apex_plugin_util.get_value_as_varchar2(l_source_result(7).data_type, l_source_result(7).value_list(idx));
-
-      if l_tree_tab(idx).node_value is null then
-        g_has_identity := false;
-      end if;
-
-      if l_tree_tab(idx).node_level = 1 then
-        g_root_count := g_root_count + 1;
-      end if;    
+    apex_debug.info('... Reading rows');
+    while apex_exec.next_row(l_context) loop
+      apex_debug.info('... Reading row ' || l_idx);
+      l_tree_tab(l_idx).node_status := apex_exec.get_number(l_context, l_col_idx('STATUS'));
+      l_tree_tab(l_idx).node_level := apex_exec.get_number(l_context, l_col_idx('LEVEL'));
+      l_tree_tab(l_idx).node_title := apex_exec.get_varchar2(l_context, l_col_idx('LABEL'));
+      l_tree_tab(l_idx).node_icon := apex_exec.get_varchar2(l_context, l_col_idx('ICON'));
+      l_tree_tab(l_idx).node_value := apex_exec.get_varchar2(l_context, l_col_idx('VALUE'));
+      l_tree_tab(l_idx).node_tooltip := apex_exec.get_varchar2(l_context, l_col_idx('TOOLTIP'));
+      l_tree_tab(l_idx).node_link := apex_exec.get_varchar2(l_context, l_col_idx('LINK'));
+      
+      l_idx := l_idx + 1;
     end loop;
-
+    
+    apex_debug.info((l_idx - 1) || ' Zeilen gelesen');
+    
+    apex_exec.close(l_context);
     return l_tree_tab;
+  exception
+    when others then
+      apex_exec.close(l_context);
+      raise;
   end get_data;
   
   
@@ -67,13 +84,14 @@ as
    * @param [p_stmt]      SQL statement to retrieve the hierachical values.
    * @usage  Is used to convert the result of GET_DATA to JSON and print it to the http stream
    */
-  procedure print_json (
-    p_stmt in varchar2)
+  procedure print_json(
+    p_region in apex_plugin.t_region)
   as
     l_tree_tab tree_tab;
     l_prev_node_level number := 1;
   begin
-    l_tree_tab := get_data(p_stmt);
+    -- retrieve data set
+    l_tree_tab := get_data(p_region);
     
     if l_tree_tab.count = 0 then
       raise NO_DATA_FOUND;
@@ -136,36 +154,38 @@ as
   
   
   /* INTERFACE */
-  function render(
+  function render_region(
     p_region in apex_plugin.t_region,
     p_plugin in apex_plugin.t_plugin,
     p_is_printer_friendly in boolean)
   return apex_plugin.t_region_render_result
   as
     C_REGION_TEMPLATE constant sql_char := 
-      q'^<div id="#REGION_STATIC_ID#"><div id="#REGION_STATIC_ID#_TREE"></div></div>^';
+      q'^<div id="#REGION_STATIC_ID#"><div id="#REGION_STATIC_ID#_tree" role="tree"></div></div>^';
 
     C_JS_TEMPLATE constant sql_char := 
-      q'^de.condes.plugin.apexTree.Region('##REGION_STATIC_ID#', {
-        ajaxIdentifier: '#AJAX_IDENTIFIER#',
-        tree$: $('##REGION_STATIC_ID#_TREE'),
-        treeId: '#REGION_STATIC_ID#_TREE',
-        treeAction: #TREE_ACTION#,
-        itemsToSubmit: [#ITEMS_TO_SUBMIT|'|'|#],
-        iconType: '#ICON_TYPE#',
-        data:{
-          config:{
-            hasIdentity:true,
-            rootAdded:#SHOW_ROOT#
-          },
-          data:{}
-        }
+      q'^
+      var options = {
+            'hasIdentity':true,
+            'rootAdded':#SHOW_ROOT#
+          };
+      de.condes.plugin.apexTree.Region('##REGION_STATIC_ID#', {
+        'ajaxIdentifier': '#AJAX_IDENTIFIER#',
+        'tree$': $('##REGION_STATIC_ID#_tree'),
+        'treeId': '#REGION_STATIC_ID#_tree',
+        'treeAction': #TREE_ACTION#,
+        'itemsToSubmit': [#ITEMS_TO_SUBMIT|'|'|#],
+        'iconType': '#ICON_TYPE#',
+        'isEditable': #EDITABLE#,
+        'config':#JAVASCRIPT_INIT|||options#,
+        'data':{'FOO':''}
       })^';
     
     l_result apex_plugin.t_region_render_result;
     l_js max_char;
-    l_action_type p_region.attribute_01%type;
-    l_icon_type p_region.attribute_02%type;
+    l_action_type p_region.attribute_07%type;
+    l_icon_type p_region.attribute_09%type;
+    l_is_editable p_region.attribute_11%type;
   begin
   
     apex_plugin_util.debug_region(
@@ -174,8 +194,9 @@ as
       p_is_printer_friendly => p_is_printer_friendly);
       
     -- Map attributes to local variables
-    l_action_type := p_region.attribute_01;
-    l_icon_type := p_region.attribute_02;
+    l_action_type := p_region.attribute_07;
+    l_icon_type := p_region.attribute_09;
+    l_is_editable := case p_region.attribute_11 when C_YES then C_TRUE else C_FALSE end;
       
     htp.p(utl_text.bulk_replace(C_REGION_TEMPLATE, char_table(
             '#REGION_STATIC_ID#', p_region.static_id)));
@@ -184,31 +205,44 @@ as
     l_js := utl_text.bulk_replace(C_JS_TEMPLATE, char_table(
               '#REGION_STATIC_ID#', p_region.static_id,
               '#AJAX_IDENTIFIER#', apex_plugin.get_ajax_identifier,
-              '#TREE_ACTION#', case l_action_type when 'D' then '''activate''' else 'false' end,
+              '#TREE_ACTION#', case l_action_type when 'D' then '''activate''' else C_FALSE end,
               '#ICON_TYPE#', l_icon_type,
-              '#SHOW_ROOT#', case g_root_count when 1 then 'false' else 'true' end,
-              '#ITEMS_TO_SUBMIT#', p_region.ajax_items_to_submit));
+              '#SHOW_ROOT#', case g_root_count when 1 then C_FALSE else C_TRUE end,
+              '#ITEMS_TO_SUBMIT#', p_region.ajax_items_to_submit,
+              '#EDITABLE#', l_is_editable,
+              '#JAVASCRIPT_INIT#', p_region.init_javascript_code));
 
     apex_javascript.add_onload_code(p_code => l_js);
     
     return l_result;
-  end render;
+  end render_region;
   
   
-  function refresh(
+  function refresh_region(
     p_region in apex_plugin.t_region,
     p_plugin in apex_plugin.t_plugin)
   return apex_plugin.t_region_ajax_result
   as
     l_result apex_plugin.t_region_ajax_result;
+    l_operation apex_application.g_x01%type;
+    l_id apex_application.g_x02%type;
+    l_parent_id apex_application.g_x03%type;
   begin
-    print_json(p_stmt => p_region.source);
+    if apex_application.g_x01 is not null then
+      l_operation := apex_application.g_x01;
+      l_id := apex_application.g_x02;
+      l_parent_id := apex_application.g_x03;
+      htp.p('{operation:''' || l_operation || ' done''}');
+    else
+      print_json(p_region => p_region);
+    end if;
+    
     return l_result;
   exception
     when NO_DATA_FOUND then
       print_no_data_found(p_region.no_data_found_message);
       return l_result;
-  end refresh;
+  end refresh_region;
 
 end plugin_apex_tree;
 /

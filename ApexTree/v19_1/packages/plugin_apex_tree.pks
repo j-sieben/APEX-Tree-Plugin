@@ -1,7 +1,7 @@
 create or replace PACKAGE plugin_apex_tree
   authid definer
 AS
-  /** Package to implement database functionalty for ApexTree Region and Item plugin
+  /** Package to implement database functionalty for ApexTree Region plugin
    *  Features:
    *  - Allows to refresh an apex.treeView dynamically
    *  - Encapsulates the refreshable tree in a region plugin
@@ -15,7 +15,7 @@ AS
   /** RENDER method for a region plugin
    * for documentation see APEX docu
    */
-  function render(
+  function render_region(
     p_region in apex_plugin.t_region,
     p_plugin in apex_plugin.t_plugin,
     p_is_printer_friendly in boolean)
@@ -25,7 +25,7 @@ AS
   /** REFRESH method for a region plugin
    * for documentation see APEX docu
    */
-  function refresh (
+  function refresh_region (
     p_region in apex_plugin.t_region,
     p_plugin in apex_plugin.t_plugin )
     return apex_plugin.t_region_ajax_result;

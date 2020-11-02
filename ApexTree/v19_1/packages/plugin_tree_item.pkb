@@ -155,7 +155,7 @@ as
   
   
   /* INTERFACE */
-  procedure render (
+  procedure render_item (
     p_item in apex_plugin.t_item,
     p_plugin in apex_plugin.t_plugin,
     p_param in apex_plugin.t_item_render_param,
@@ -212,10 +212,10 @@ as
               '#ITEM_ID#', p_item.name));
 
     apex_javascript.add_onload_code(p_code => l_js);
-  end render;
+  end render_item;
   
   
-  procedure get_metadata (
+  procedure get_metadata_item (
     p_item in apex_plugin.t_item,
     p_plugin in apex_plugin.t_plugin,
     p_param in apex_plugin.t_item_meta_data_param,
@@ -225,10 +225,10 @@ as
   begin
     -- Stub
     null;
-  end get_metadata;
+  end get_metadata_item;
   
   
-  procedure validate(
+  procedure validate_item (
     p_item in apex_plugin.t_item,
     p_plugin in apex_plugin.t_plugin,
     p_param in apex_plugin.t_item_validation_param,
@@ -237,10 +237,10 @@ as
   begin
     -- Stub
     null;
-  end validate;
+  end validate_item;
   
   
-  procedure refresh(
+  procedure refresh_item (
     p_item in apex_plugin.t_item,
     p_plugin in apex_plugin.t_plugin,
     p_param in apex_plugin.t_item_ajax_param,
@@ -253,6 +253,6 @@ as
   exception
     when NO_DATA_FOUND then
       print_no_data_found;
-  end refresh;
+  end refresh_item;
 
 end plugin_tree_item;

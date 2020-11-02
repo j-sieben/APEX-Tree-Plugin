@@ -16,7 +16,7 @@ AS
   /** RENDER method for an item plugin
    * for documentation see APEX docu
    */
-  procedure render (
+  procedure render_item (
     p_item in apex_plugin.t_item,
     p_plugin in apex_plugin.t_plugin,
     p_param in apex_plugin.t_item_render_param,
@@ -26,7 +26,7 @@ AS
   /* META_DATA method if used in an interactive grid
    * for documentation see APEX docu
    */
-  procedure get_metadata (
+  procedure get_metadata_item (
     p_item in apex_plugin.t_item,
     p_plugin in apex_plugin.t_plugin,
     p_param in apex_plugin.t_item_meta_data_param,
@@ -36,7 +36,7 @@ AS
   /** VALIDATE method for an item plugin
    * for documentation see APEX docu
    */
-  procedure validate(
+  procedure validate_item (
     p_item in apex_plugin.t_item,
     p_plugin in apex_plugin.t_plugin,
     p_param in apex_plugin.t_item_validation_param,
@@ -46,7 +46,7 @@ AS
   /** RENDER method for an item plugin
    * for documentation see APEX docu
    */
-  procedure refresh (
+  procedure refresh_item (
     p_item in apex_plugin.t_item,
     p_plugin in apex_plugin.t_plugin,
     p_param in apex_plugin.t_item_ajax_param,
