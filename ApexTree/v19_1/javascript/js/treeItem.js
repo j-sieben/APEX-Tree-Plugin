@@ -2,7 +2,7 @@
 /*!
  de.condes.plugin.treeItem.js
  */
- 
+
 // Namespace
 var de = de ||{};
 de.condes = de.condes ||{};
@@ -80,7 +80,7 @@ de.condes.plugin.treeItem = de.condes.plugin.treeItem ||{};
     function getLevel(nodeContent$, labelSel){
         return parseInt(nodeContent$.find(labelSel).attr(A_LEVEL), 10);
     }
-        
+
 $.widget('condes.treeItem', $.extend(true,
   /**
    * @lends treeItem.prototype
@@ -286,9 +286,9 @@ $.widget('condes.treeItem', $.extend(true,
       this._setOption(treeElement$, 'disabled', options.disabled);
 
       this.rerender();
-      
+
     }, // _create
-    
+
     _eventHandlers:{
       click: function(event){
           var node$,
@@ -387,7 +387,7 @@ $.widget('condes.treeItem', $.extend(true,
             }
             event.preventDefault();
         } else if(kc === keys.ENTER){
-            
+
         }
       }, // keydown
 
@@ -579,29 +579,29 @@ $.widget('condes.treeItem', $.extend(true,
     //
     // Public methods
     //
-    
-    
-    /** 
+
+
+    /**
      * <p>Call to reset the data of the tree.</p>
      */
     setData: function(pData){
       var nodeAdapter = this.nodeAdapter;
-      
+
       nodeAdapter.data = pData.data;
-      
+
       this.rerender();
     }, // setData
-    
+
     setTreeMap: function(){
       var nodeAdapter = this.nodeAdapter,
           node, nodeId, elementId, selectedNodes;
-      
+
       this.treeMap ={};
       node = nodeAdapter.data; // Root node
       selectedNodes = nodeAdapter.data.selectedNodes;
-      
-      
-      
+
+
+
     },
 
     /**
@@ -618,7 +618,7 @@ $.widget('condes.treeItem', $.extend(true,
           selectedNodes = null,
           treeElement$ = this.element,
           out = apex.util.htmlBuilder(),
-          initiallyOpenedSelector = '.level' + options.expandLevel;
+          initiallyOpenedSelector, i;
 
       // Select pre-selected values from session state
       if(nodeAdapter.getViewId){
@@ -658,10 +658,13 @@ $.widget('condes.treeItem', $.extend(true,
       }
 
       // all nodes are expanded by default, collapse anything above initially expanded level
-      treeElement$.find(initiallyOpenedSelector).closest('li').each(function(){
-        self._collapseNode($(this));
-      });
-      
+      for(i = 9; i >= options.expandLevel; i--){
+        initiallyOpenedSelector = '.level' + i;
+        treeElement$.find(initiallyOpenedSelector).closest('li').each(function(){
+          self._collapseNode($(this));
+        });
+      }
+
       if(this.hasCurrent){
         sel$ = this.find({
             depth: -1,
@@ -756,7 +759,7 @@ $.widget('condes.treeItem', $.extend(true,
             }
         });
     }, // collapse
-    
+
     /**
      * <p>Enable editing of the tree selection. This means that the checkboxes are selectable and the value of the plugin changes.
      *    See also{@link treeView#disable}.</p>
@@ -767,7 +770,7 @@ $.widget('condes.treeItem', $.extend(true,
     enable: function(){
       this._setOption('disabled', false);
     }, // enable
-    
+
     /**
      * <p>Disables editing of the tree selection. This means that the checkboxes are not selectable but they are able to have a value, i.e. show a selection status.
      *    See also{@link treeView#enable}.</p>
@@ -778,7 +781,7 @@ $.widget('condes.treeItem', $.extend(true,
     disable: function(){
       this._setOption('disabled', true);
     }, // disable
-    
+
     /**
      * <p>Returns true if the status of the tree is set to disabled and false otherwise.
      *    See also {@link treeView#enable} and {@link treeView#disable}.</p>
@@ -844,6 +847,19 @@ $.widget('condes.treeItem', $.extend(true,
       return $('#' + nodeId);
     }, // getHtmlNode
 
+    /** <p>Method returns the selecte node ids as a colon separated string</p>
+     *
+     * @return{treeNodeAdapter.node[]} Array of data model nodes selected.
+     * @example <caption>This example gets the nodes for the current selection.</caption>
+     * var selectedNodes = $('.selector').treeView('getSelectedNodes');
+     */
+    getValue: function(){
+      var nodeList = this.getSelectedNodes(),
+          nodeIdList = $.map(nodeList, function(n, i){return n.id});
+
+      return nodeIdList.join(':');
+    }, // getValue
+
     /**
      * <p>Returns the adapter's data model nodes corresponding to the currently selected treeView nodes.
      * See also{@link treeView#getSelection} and{@link treeView#getNodes}.</p>
@@ -875,13 +891,13 @@ $.widget('condes.treeItem', $.extend(true,
         };
       });
     }, // setSelectedNodes
-    
+
     _clearSelection: function(){
-      var self = this; 
+      var self = this;
       this.getSelection().each(function(){
         self._select($(this));
       });
-    },
+    }, // _clearSelection
 
     _toggleNode: function(node$){
         if(node$.hasClass(C_EXPANDABLE)){
@@ -889,7 +905,7 @@ $.widget('condes.treeItem', $.extend(true,
         } else{
             this._collapseNode(node$);
         }
-    },
+    }, // _toggleNode
 
     _renderNode: function(node, level, out){
       var hasChildren, nextId, nodeClass, contentClass, noCollapse, expanded, rowClass, nc,
@@ -899,12 +915,12 @@ $.widget('condes.treeItem', $.extend(true,
           nodeId;
 
       nextId = this.nextNodeId;
-      
+
       this.treeMap[nextId] = node;
       if(nodeAdapter.setViewId){
         nodeAdapter.setViewId(this.baseId, node, nextId);
       };
-      
+
       nodeId = this.baseId + nextId;
       node.elementId = nodeId;
       this.nextNodeId += 1;
@@ -923,7 +939,7 @@ $.widget('condes.treeItem', $.extend(true,
       } else{
         nodeClass += C_LEAF;
       }
-      
+
       noCollapse = nextId === 0 && options.showRoot && !options.collapsibleRoot;
       if(noCollapse){
         nodeClass += ' ' + C_NO_COLLAPSE;
@@ -972,21 +988,20 @@ $.widget('condes.treeItem', $.extend(true,
       });
       out.markup('</div>');
 
-      // do lazy rendering - don't add children until expanded
-      //if(expanded){
-        out.markup(M_BEGIN_CHILDREN);
-        this._renderChildren(node, level + 1, out);
-        out.markup(M_END_CHILDREN);
-      //}
+      // No lazy rendering to enable selection of any node by setSelectedNodes
+	  out.markup(M_BEGIN_CHILDREN);
+	  this._renderChildren(node, level + 1, out);
+	  out.markup(M_END_CHILDREN);
+
       out.markup('</li>');
-    },
-    
+    }, // _renderNode
+
     _renderChildren: function(node, level, out, fn, node$){
         var len,
             self = this,
             nodeAdapter = this.nodeAdapter,
             childNode;
-            
+
             function doit() {
               var i;
               for ( i = 0; i < len; i++ ) {
@@ -1000,21 +1015,21 @@ $.widget('condes.treeItem', $.extend(true,
             }
 
         len = nodeAdapter.childCount(node);
-        
+
         if(len > 0){
           doit();
-        } 
+        }
         else{
           if (fn) {
             fn(0); // no children were rendered
           }
         }
-    },
+    }, // _renderChildren
 
     _getRoots: function(){
         return this.element.children('ul').children('li');
-    },
-    
+    }, // _getRoots
+
     _getNodeById: function(pData, pId){
       var self = this,
           node;
@@ -1028,7 +1043,7 @@ $.widget('condes.treeItem', $.extend(true,
         });
       };
       return node;
-    },
+    }, // _getNodeById
 
     _persistExpansionState: function(node, node$, state){
         var nodeAdapter = this.nodeAdapter;
@@ -1041,7 +1056,7 @@ $.widget('condes.treeItem', $.extend(true,
             nodeContent$: node$.children(SEL_CONTENT),
             expanded: state
         });
-    },
+    }, // _persistExpansionState
 
     _expandNode: function(node$, fn){
         var ul$, out,
@@ -1082,7 +1097,7 @@ $.widget('condes.treeItem', $.extend(true,
                 }
             }, node$);
         }
-    },
+    }, // _expandNode
 
     _collapseNode: function(node$){
         var options = this.options;
@@ -1093,7 +1108,7 @@ $.widget('condes.treeItem', $.extend(true,
         node$.removeClass(C_COLLAPSIBLE).addClass(C_EXPANDABLE).children(SEL_CONTENT).find(this.labelSelector).attr(A_EXPANDED, FALSE);
         node$.children('ul').hide();
         this._persistExpansionState(this.treeMap[getIdFromNode(node$)], node$, false);
-    },
+    }, // _collapseNode
 
     _traverseDown: function(event, count){
         var node$, next$, i;
@@ -1112,7 +1127,7 @@ $.widget('condes.treeItem', $.extend(true,
         if ( node$.length > 0 ) {
             this._focus( node$.children( SEL_CONTENT ), event, true, true );
         };
-     }, // traverseDown
+     }, // _traverseDown
 
     _traverseUp: function(event, count){
         var node$, prev$, i;
@@ -1131,24 +1146,25 @@ $.widget('condes.treeItem', $.extend(true,
         if ( node$.length > 0 ) {
             this._focus( node$.children( SEL_CONTENT ), event, true, true );
         };
-     }, // traverseUp
-    
+     }, // _traverseUp
+
     _select: function(pNode$){
       var modelNode,
           isSelectable = pNode$.not(SEL_DISABLED);
-      
+
       if(isSelectable){
         modelNode = this.getNodes(pNode$)[0];
         setSubTree(modelNode, this);
+        this.element.trigger(EVENT_SELECTION_CHANGE);
       };
     },
-    
+
     _focus: function(pNode$){
       var focusLabel$, sp, offset, treeOffset, spOffset,
           ctrl$ = this.element;
-      
+
       focusLabel$ = pNode$.eq(0).find(this.labelSelector);
-      
+
       // focus if needed
       if (focusLabel$.length){
         if (focus){
@@ -1188,7 +1204,7 @@ $.widget('condes.treeItem', $.extend(true,
         }
       }
     }, // _focus
-    
+
     _setFocusable: function(label$){
       var label = label$[0];
 
@@ -1199,7 +1215,7 @@ $.widget('condes.treeItem', $.extend(true,
         label.tabIndex = 0;
         this.lastFocused = label;
       }
-    }
+    } // _setFocusable
   })
 );
 
@@ -1240,7 +1256,7 @@ $.widget('condes.treeItem', $.extend(true,
 
         if(pNode.icon || pNode.icon === null){
             icon = pNode.icon;
-        } 
+        }
         return icon;
     },
 
@@ -1279,7 +1295,7 @@ $.widget('condes.treeItem', $.extend(true,
         if(pNode.isDisabled !== undefined){
             disabled = pNode.isDisabled;
         }
-        
+
         return disabled;
     },
 
@@ -1325,16 +1341,16 @@ $.widget('condes.treeItem', $.extend(true,
     var that = Object.create(defaultNodeAdapter);
 
     that._getIdentity = $.isFunction('id') ? 'id' : function(node){return node['id'];};
- 
+
     if($.isArray(pHasIdentity)){
       pInitialExpandedNodeIds = pHasIdentity;
       pHasIdentity = true;
     };
-    
+
     if(pHasIdentity === null || pHasIdentity === undefined){
       pHasIdentity = true;
     };
-    
+
     if(pHasIdentity){
       that._state = {};
       /**
@@ -1360,7 +1376,7 @@ $.widget('condes.treeItem', $.extend(true,
         var expandedNodes = this._getExpandedNodes(pTreeId);
         expandedNodes[this._getIdentity(pNode)] = pExpanded;
       }; //setExpanded
-      
+
       /**
        * Returns an array of each of the expanded node's id. Can be used to persist the expansion state.
        * See{@link treeView#getExpandedNodeIds}.
@@ -1380,7 +1396,7 @@ $.widget('condes.treeItem', $.extend(true,
         }
         return nodes;
       }; //getExpandedNodeIds
-      
+
       that._getExpandedNodes = function(pTreeId){
         var i,
             expandedNodes = this._state[pTreeId] && this._state[pTreeId].expandedNodes;
@@ -1472,12 +1488,12 @@ $.widget('condes.treeItem', $.extend(true,
           }
         }
       }; //clearViewId
-            
+
       that._nextId = 1;
     }; // end if pHasIdentity
-    
+
     that.data = pData;
-    
+
     that.types = $.extend(true,{},{
         'default' :{
             isDisabled: false,
@@ -1485,10 +1501,10 @@ $.widget('condes.treeItem', $.extend(true,
             operations:{}
         }
     }, pTypes); // types
-    
+
     return that;
   }; //makeDefaultNodeAdapter
-  
+
   /** <p>Render method for the apex.treeView</p>
    * <p>This method is used to render the node content.</p>
    * @method renderNodeContent
@@ -1511,13 +1527,13 @@ $.widget('condes.treeItem', $.extend(true,
         elementName,
         cssClass = C_TREE_CHECK_CLASS + ' ',
         isSelected = pState.hasChildren === false && pNode.checkedNodes > 0;
-    
+
     // this is the checkbox - its not a real checkbox input
-    pOut.markup('<span ')
+    pOut.markup('<a ')
       .attr(A_CLASS, cssClass)
       .markup('>')
-      .markup('</span>');
-      
+      .markup('</a>');
+
     // the rest of this code is essentially a copy of what is in widget.treeView.js function renderTreeNodeContent
     if(pAdapter.getIcon){
       icon = pAdapter.getIcon(pNode);
@@ -1535,8 +1551,8 @@ $.widget('condes.treeItem', $.extend(true,
       .content(pAdapter.getLabel(pNode))
       .markup('</span>');
   }; // renderTreeNodeContent
-  
-  
+
+
   /** <p>Method to set the focus to a node in the tree</p>
    */
   function setFocus(elem){
@@ -1544,7 +1560,7 @@ $.widget('condes.treeItem', $.extend(true,
       elem.focus();
   }; // focus
 
-  
+
   /** <p>Method to find the next node in the tree</p>
    */
   function nextNode(node$){
@@ -1579,14 +1595,14 @@ $.widget('condes.treeItem', $.extend(true,
       }
       return prev$;
   }; //prevNode
-  
-  
+
+
   /** p>Method travesres down the tree and sets or resets the select status</p>
    */
-  function setSubTree(pNode, tree, pCheckMode){ 
+  function setSubTree(pNode, tree, pCheckMode){
     var node$ = $('#' + pNode.elementId),
         selector, isDirectCall;
-    
+
     // switch off if recursively called
     isDirectCall = typeof(pCheckMode) == 'undefined';
     if(isDirectCall){
@@ -1594,7 +1610,7 @@ $.widget('condes.treeItem', $.extend(true,
       selector = C_TREE_PART_CHECK_SELECTOR + ', ' + C_TREE_FULL_CHECK_SELECTOR;
       pCheckMode = node$.children('div').children(selector).length > 0 ? C_UNCHECKED : C_CHECKED;
     };
-    
+
     if(pNode.children){
       // Node has children, call setSubTree recursively
       pNode.children.forEach(function(childNode, index, arrayOfChildren){
@@ -1611,8 +1627,8 @@ $.widget('condes.treeItem', $.extend(true,
       };
     };
   }; //setSubTree
-  
-  
+
+
   /** <p>Method to control the visibility and selection status of the checkbox nodes</p>
    */
   function setCheckbox(pNode$, pCheckMode){
@@ -1626,12 +1642,12 @@ $.widget('condes.treeItem', $.extend(true,
       pNode$.find(SEL_LABEL).attr(A_SELECTED, true);
     };
   }; //setCheckbox
-  
+
   /** <p>Method to propagate the state of the checkboxes up the tree</p>
    */
   function setParentCheckboxes(pNode$, tree){
     var childrenCount, checkedCount, actualNode;
-      
+
     pNode$.children().parents(SEL_NODE).each(function(){
       var node$ = $(this);
       // propagate changes on child nodes up the tree
@@ -1655,5 +1671,5 @@ $.widget('condes.treeItem', $.extend(true,
       };
     });
   }; //setParentCheckboxes
-    
+
 })(de.condes.plugin.treeItem, apex.jQuery, apex.server);

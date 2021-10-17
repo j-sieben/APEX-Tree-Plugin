@@ -12,7 +12,7 @@ var C_APEX_AFTER_REFRESH_EVENT = 'apexafterrefresh';
  * The{@link apex.widget}.treeItem is used for APEX treeItem item widgets of Oracle Application Express.
  **/
 /*global apex, $v, $s*/
-(function(widget, $, util){
+(function(widget, $){
 
 /**
  * @param{String} pSelector jQuery selector to identify APEX page item(s) for this widget.
@@ -31,6 +31,7 @@ widget.treeItem = function(pSelector, pStaticData, pOptions){
           operations: {}
         }
       },
+      initialValue,
       types = $.extend(true, {}, defaultTypeData),
       hasTooltip = pOptions.nodeHasTooltip,
       treeItem$ = $(pSelector, apex.gPageContext$),
@@ -71,10 +72,7 @@ widget.treeItem = function(pSelector, pStaticData, pOptions){
             };
           },
           getValue : function(){
-            var nodeList = tree$.treeItem('getSelectedNodes'),
-                nodeIdList = $.map(nodeList, function(n, i){return n.id});
-            
-            return nodeIdList.join(':');
+            return tree$.treeItem('getValue');
           },
           nullValue : gOptions.nullValue,
           loadingIndicator : function(pLoadingIndicator$){
@@ -134,10 +132,16 @@ widget.treeItem = function(pSelector, pStaticData, pOptions){
     }
     
     // register the refresh event which is triggered by triggerRefresh or a manual refresh
-    treeItem$.on("apexrefresh", refresh);
+    treeItem$
+      .on('apexrefresh', refresh);
+    tree$
+      .on('selectionChange', function() {
+        $('#' + treeItem$.attr('id')).val(tree$.treeItem('getValue'));
+      });
 
     _triggerRefresh();
   });
+  
   // remove everything within the fieldset
   function _clear(){
     treeItem$.children(":not(legend)").remove();
@@ -159,29 +163,39 @@ widget.treeItem = function(pSelector, pStaticData, pOptions){
   // Clears the existing checkboxes/radiogroups and executes an AJAX call to get new values based
   // on the depending on fields
   function refresh(pEvent){
-
-    apex.widget.util.cascadingLov(
-      treeItem$,
-      gOptions.ajaxIdentifier,
-     {
-        pageItems: $(gOptions.itemsToSubmit, apex.gPageContext$)
-      },
-     {
-        optimizeRefresh: gOptions.optimizeRefresh,
-        dependingOn: $(gOptions.dependingOnSelector, apex.gPageContext$),
-        success: function(pData){
-          _addResult(pData);
-
-          // Set item default values if they have been passed to the Ajax call
-          if (pData.hasOwnProperty("default")){
-            $s(treeItem$[ 0 ], pData[ "default" ]);
-          }
-        },
-        clear: _clear,
-        target: pEvent.target
+    var callback = function(data){
+      var treeData = data.data || {};
+      //var defaultValues = data['default'] || {};
+      var showRoot = data.showRoot || false;
+      var navigation = data.navigation || false;
+      var hasIdentity = data.hasIdentity || true;
+      var adapter = tree$.treeItem('getNodeAdapter');
+      
+      adapter.data = treeData;
+      tree$.treeItem('getNodeAdapter', function(){
+        return adapter;
       });
+      tree$.treeItem('option', 'showRoot', showRoot);
+      tree$.treeItem('option', 'navigation', navigation);
+      tree$.treeItem('refresh');
+      apex.item(treeItem$[0]).setValue(defaultValues);
+      
+      treeItem$.trigger(C_APEX_AFTER_REFRESH_EVENT);
+    };
+    apex.server.plugin(
+      gOptions.ajaxIdentifier,
+      {
+        pageItems: gOptions.itemsToSubmit
+      },
+      {
+        refreshObject: treeItem$,
+        loadingIndicator: treeItem$,
+        loadingIndicatorPosition: 'centered',
+        success: callback
+      }
+    );
   } // refresh
 
 }; // treeItem
 
-})(de.condes.plugin.widget, apex.jQuery, apex.util);
+})(de.condes.plugin.widget, apex.jQuery);

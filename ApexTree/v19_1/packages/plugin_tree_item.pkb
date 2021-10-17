@@ -155,7 +155,7 @@ as
   
   
   /* INTERFACE */
-  procedure render_item (
+  procedure render (
     p_item in apex_plugin.t_item,
     p_plugin in apex_plugin.t_plugin,
     p_param in apex_plugin.t_item_render_param,
@@ -202,20 +202,20 @@ as
 
     -- prepare and add JavaScript to instantiate the plugin
     l_js := utl_text.bulk_replace(C_JS_TEMPLATE, char_table(
-              '#AJAX_IDENTIFIER#', apex_plugin.get_ajax_identifier,
               '#CASCADING_LOV#', case when p_item.lov_cascade_parent_items is not null then '#' || p_item.lov_cascade_parent_items end,
               '#NO_DATA_FOUND#', l_no_data_found_message,
-              '#OPTIMIZE_REFRESH#', case when p_item.ajax_optimize_refresh then 'true' else 'false' end,
+              '#OPTIMIZE_REFRESH#', 'false', --case when p_item.ajax_optimize_refresh then 'true' else 'false' end,
               '#EXPAND_LEVEL#', coalesce(l_expand_level, 2), 
               '#SHOW_ROOT#', case g_root_count when 1 then 'false' else 'true' end,
               '#ITEMS_TO_SUBMIT#', p_item.ajax_items_to_submit,
               '#ITEM_ID#', p_item.name));
+    l_js := replace(l_js, '#AJAX_IDENTIFIER#', apex_plugin.get_ajax_identifier);
 
     apex_javascript.add_onload_code(p_code => l_js);
-  end render_item;
+  end render;
   
   
-  procedure get_metadata_item (
+  procedure get_metadata (
     p_item in apex_plugin.t_item,
     p_plugin in apex_plugin.t_plugin,
     p_param in apex_plugin.t_item_meta_data_param,
@@ -225,10 +225,10 @@ as
   begin
     -- Stub
     null;
-  end get_metadata_item;
+  end get_metadata;
   
   
-  procedure validate_item (
+  procedure validate (
     p_item in apex_plugin.t_item,
     p_plugin in apex_plugin.t_plugin,
     p_param in apex_plugin.t_item_validation_param,
@@ -237,10 +237,10 @@ as
   begin
     -- Stub
     null;
-  end validate_item;
+  end validate;
   
   
-  procedure refresh_item (
+  procedure refresh (
     p_item in apex_plugin.t_item,
     p_plugin in apex_plugin.t_plugin,
     p_param in apex_plugin.t_item_ajax_param,
@@ -253,6 +253,6 @@ as
   exception
     when NO_DATA_FOUND then
       print_no_data_found;
-  end refresh_item;
+  end refresh;
 
 end plugin_tree_item;
