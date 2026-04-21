@@ -1,0 +1,47 @@
+.apex-tree-item {
+  width: 100%;
+}
+
+.apex-tree-item-tree.is-disabled {
+  opacity: .65;
+  pointer-events: none;
+}
+
+.apex-tree-item-message {
+  display: inline-block;
+  padding: .5rem 0;
+}
+
+.a-TreeView-checkBox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: top;
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+  color: #1f2937;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.a-TreeView-checkBox-state {
+  display: none;
+}
+
+.a-TreeView-checkBox--unchecked .a-TreeView-checkBox-state--unchecked {
+  display: inline-block;
+}
+
+.a-TreeView-checkBox--partial .a-TreeView-checkBox-state--partial {
+  display: inline-block;
+}
+
+.a-TreeView-checkBox--checked .a-TreeView-checkBox-state--checked {
+  display: inline-block;
+}
+
+.a-TreeView-icon {
+  padding-left: 4px;
+}

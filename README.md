@@ -1,33 +1,39 @@
-# APEX Tree Plugin
- Plugin to use an apex.treeView as a page item or a refreshable region
+# APEX Tree Item
 
-## Background
+APEX Tree Item is an Oracle APEX item plugin that renders hierarchical data with the native APEX `treeView` widget and stores checked leaf nodes as a normal page item value.
 
-It all started with the requirement to collect authorization rights for applications to combine them to roles. It was found that a tree view would be an easy option to achieve that. I started working with the `apex.treeView` implementation. As a matter of fact we developed the solution for Apex 5.0 where it is not that easy to add checkboxes to the tree as it is today. And even today checkboxes don't support real tristate checkboxes. But this has been done several times. I digged into the implementation of [Ezhik](https://ezhikorn.wordpress.com/2017/10/18/apex-5-treeview-true-checkbox/) who in turn based his work on Jon Snyders [blog](http://hardlikesoftware.com/weblog/2017/04/12/add-checkbox-selection-to-apex-tree-region/) around that topic.
+The plugin is built for APEX 19.1 and newer. It uses an adapter layer so future APEX-specific changes can be isolated without changing the item state model.
 
-I then found it cumbersome that the `apex.treeView` does not supprt AJAX refreshes, forcing me to refresh the whole page if a different application is chosen. To overcome this, I looked into the work of [mennooo](https://github.com/mennooo/orclapex-treeview-refresh) who solved this issue and refreshes `apex.treeView` dynamically.
+## Features
 
-I learned a lot from their work but at the end I felt something different had to be done. I didn't really liked mennooo's approach of creating a dynamic action plugin to enable the tree to refresh and thought it should be possible to have both options (refresh and checkboxes) in one plugin.
+- Displays hierarchical LOV data as an APEX tree.
+- Adds plugin-managed tri-state checkboxes.
+- Keeps native tree selection separate from checked state.
+- Stores checked leaf node IDs as a colon separated value.
+- Implements APEX item behavior such as `getValue`, `setValue`, `refresh`, `enable` and `disable`.
+- Supports cascading LOV refreshes.
 
-## Solution
-I decided to create two plugins based on one JavaScript file which in essence is a wrapper around `apex.treeView` (hence the name `treeViewWrapper.js`). The plugins are
+## Structure
 
-* A region plugin with the ability to dynamically refresh the tree
-* An item plugin that encapsulates `apex.treeView` as a page item and allows to select entries with checkboxes.
+```text
+ApexTree/
+  core/       Shared JavaScript, CSS, tests and item logic
+  adapters/   APEX-version adapters, currently apex19
+  plugin/     APEX plugin export and PL/SQL package files
+docs/         Local Obsidian-compatible documentation vault
+```
 
-The item plugin is especially useful as I strongly dislike the idea of having a region with a value. Using `apex.treeView` as the basis for a normal page item makes it something like the shuttle control. It's very easy to integrate into the page as it has a `setValue`, `getValue` method, allows for cascading lov support and so on. The page item will send the id list of the selected leafs using the same mechanism a shuttle control uses: as a colon separated list of IDs.
+## Documentation
 
-The region plugin is refreshable which comes in handy if you want to edit the entries by clicking on them. The region automatically binds to the `apexafterdialogclose` event and refreshes itself, maintaining its visual state. I really like this approach from mennooo. As mennooo pointed out, you need to create links by calling the `apex_util.prepare_url`. This method allows to set the triggering item. This item should be set to the `static region id` you define for your region plugin.
+The main documentation lives in the local Obsidian vault under [docs/Home.md](docs/Home.md).
 
-I created two versions of the plugin, one for APEX 5.0 (my client still uses this version) and 19.1. I tried my best to support the respective Universal theme. If something is missing, just give me a notice.
+Start there for installation, LOV source format, architecture notes, JavaScript API behavior and development guidance.
 
-## Differences
+## Installation Summary
 
-Some functionality of the original `apex.treeView` is not supported when using the plugins. If you use the region plugin, it does not support having a page item to hold the values, as this is achieved with the page item plugin. The page item plugin on the other hand does not support links, as I found it strange that a page item calls other pages when selecting values. Obviously the plugin does not support the legacy `jsTree` anymore.
+1. Install the PL/SQL package from `ApexTree/plugin/packages`.
+2. Import the plugin export from `ApexTree/plugin/scripts`.
+3. Make the files under `ApexTree/core` and `ApexTree/adapters` available as plugin files.
+4. Set the plugin file prefix so the paths in the plugin export resolve correctly.
 
-## Installation
-The installation is not that condensed as you may be used to from other plugins. The code is separated into database packages, the files are separate from the plugin to be copied to the web server. You may decide to throw anything together on the page, but I don't like that approach and don't want to support it.
-
-Therefore you need to download the plugin, install the packages, import the plugin and copy the files to the web folder. There is a need to adjust the file path settings. This can be done after importing the plugins by adjusting the `File Prefix` attribute. I normally have folders for `css` and `js`. If you don't follow that route, you have to adjust the file pathes as well.
-
-The plugin has a dependency to my `UTL_TEXT` package, espacially to the `BULK_REPLACE` method. You can donwload `UTL_TEXT` [here](https://github.com/j-sieben/UTL_TEXT), roll your own bulk replace method or simply replace the calls with a nested `REPLACE`.
+See [docs/Installation.md](docs/Installation.md) for details.
