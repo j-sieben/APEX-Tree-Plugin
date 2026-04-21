@@ -23,6 +23,11 @@ The current unit tests cover:
 - unknown values
 - empty values
 - refresh with changed tree data
+- adapter registration, lookup and missing-adapter errors
+- APEX 19 adapter registration contract
+- checkbox renderer markup, ARIA state and CSS state updates
+- base tree adapter calls to native `treeView` init, refresh, destroy, getNodes and getTreeNode
+- base tree adapter data payload, renderer registration and disabled-state mapping
 
 ## APEX Smoke Tests
 

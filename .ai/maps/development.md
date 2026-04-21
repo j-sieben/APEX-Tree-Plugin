@@ -24,6 +24,11 @@ node --test ApexTree/core/javascript/test/*.test.js
 - unknown IDs
 - empty values
 - refresh with changed tree data
+- adapter registry registration, lookup and error handling
+- APEX 19 adapter registration contract
+- checkbox renderer markup, ARIA mapping and CSS class updates
+- base tree adapter communication with native `treeView` calls
+- base tree adapter data payload, renderer registration and disabled-state mapping
 
 ## JavaScript Documentation
 
