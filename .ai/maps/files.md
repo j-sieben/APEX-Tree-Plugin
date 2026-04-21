@@ -31,6 +31,8 @@
   - Package body with adapter selection, LOV execution and JSON serialization.
 - `ApexTree/plugin/scripts/item_type_plugin_de_condes_plugin_tree_item.sql`
   - APEX item plugin export.
+- `ApexTree/plugin/scripts/item_type_plugin_de_condes_plugin_tree_item_24.sql`
+  - APEX 24+ item plugin export. Use this script for APEX 24 and newer.
 
 ## Documentation
 

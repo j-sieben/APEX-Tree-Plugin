@@ -30,6 +30,9 @@ Topic pages:
 Plugin help text and attribute help text live in:
 
 - `ApexTree/plugin/scripts/item_type_plugin_de_condes_plugin_tree_item.sql`
+  - Default plugin export for APEX versions before 24.
+- `ApexTree/plugin/scripts/item_type_plugin_de_condes_plugin_tree_item_24.sql`
+  - Plugin export for APEX 24 and newer.
 
 Current public attribute:
 

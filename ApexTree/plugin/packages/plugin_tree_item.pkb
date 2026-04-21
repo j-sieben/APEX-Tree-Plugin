@@ -26,7 +26,7 @@ as
   c_column_count constant number := 6;
 
   type adapter_rec is record (
-    name varchar2(30),
+    name varchar2(128 byte),
     min_major pls_integer,
     min_minor pls_integer);
 
@@ -96,11 +96,11 @@ as
   function get_adapter_name
     return varchar2
   as
-    l_apex_version varchar2(30) := apex_release.version;
+    l_apex_version varchar2(128 byte) := apex_release.version;
     l_apex_major pls_integer := version_part(l_apex_version, 1);
     l_apex_minor pls_integer := version_part(l_apex_version, 2);
     l_adapters adapter_tab := available_adapters;
-    l_best_name varchar2(30);
+    l_best_name varchar2(128 byte);
     l_best_major pls_integer := -1;
     l_best_minor pls_integer := -1;
   begin
@@ -299,20 +299,20 @@ as
       p_is_readonly => p_param.is_readonly,
       p_is_printer_friendly => p_param.is_printer_friendly);
 
-    l_no_data_found_message := nvl(p_item.attribute_01, 'No data found');
+    l_no_data_found_message := coalesce(p_item.attribute_01, 'No data found');
 
-    htp.p(utl_text.bulk_replace(c_item_template, char_table(
-      '#ITEM_ID#', p_item.name,
-      '#ITEM_NAME#', apex_plugin.get_input_name_for_page_item(false),
-      '#ITEM_CLASSES#', p_item.element_css_classes,
-      '#VALUE#', apex_escape.html_attribute(p_param.value))));
+    htp.p(replace(replace(replace(replace(c_item_template,
+      '#ITEM_ID#', p_item.name),
+      '#ITEM_NAME#', apex_plugin.get_input_name_for_page_item(false)),
+      '#ITEM_CLASSES#', p_item.element_css_classes),
+      '#VALUE#', apex_escape.html_attribute(p_param.value)));
 
-    l_js := utl_text.bulk_replace(c_js_template, char_table(
-      '#CASCADING_LOV#', case when p_item.lov_cascade_parent_items is not null then '#' || p_item.lov_cascade_parent_items end,
-      '#NO_DATA_FOUND#', apex_escape.js_literal(l_no_data_found_message),
-      '#ADAPTER_NAME#', get_adapter_name,
-      '#ITEMS_TO_SUBMIT#', p_item.ajax_items_to_submit,
-      '#ITEM_ID#', p_item.name));
+    l_js := replace(replace(replace(replace(replace(c_js_template,
+      '#CASCADING_LOV#', case when p_item.lov_cascade_parent_items is not null then '#' || p_item.lov_cascade_parent_items end),
+      '#NO_DATA_FOUND#', apex_escape.js_literal(l_no_data_found_message)),
+      '#ADAPTER_NAME#', get_adapter_name),
+      '#ITEMS_TO_SUBMIT#', p_item.ajax_items_to_submit),
+      '#ITEM_ID#', p_item.name);
     l_js := replace(l_js, '#AJAX_IDENTIFIER#', apex_plugin.get_ajax_identifier);
 
     apex_javascript.add_onload_code(p_code => l_js);
@@ -363,7 +363,7 @@ as
     print_json(p_stmt => p_item.lov_definition);
   exception
     when no_data_found then
-      print_no_data_found(nvl(p_item.attribute_01, 'No data found'));
+      print_no_data_found(coalesce(p_item.attribute_01, 'No data found'));
   end refresh;
 end plugin_tree_item;
 /

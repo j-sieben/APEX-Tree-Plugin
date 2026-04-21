@@ -23,6 +23,12 @@ Import the item plugin export from:
 ApexTree/plugin/scripts/item_type_plugin_de_condes_plugin_tree_item.sql
 ```
 
+For APEX 24 and newer, use the APEX 24 export script instead:
+
+```text
+ApexTree/plugin/scripts/item_type_plugin_de_condes_plugin_tree_item_24.sql
+```
+
 The plugin internal name is:
 
 ```text

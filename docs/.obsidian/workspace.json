@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "JavaScript API.md",
+                "file": "Installation.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "JavaScript API"
+              "title": "Installation"
             }
           }
         ]
@@ -94,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "JavaScript API.md",
+                "file": "Installation.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Rückverweise auf JavaScript API"
+              "title": "Rückverweise auf Installation"
             }
           },
           {
@@ -113,12 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "JavaScript API.md",
+                "file": "Installation.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Ausgehende Links von JavaScript API öffnen"
+              "title": "Ausgehende Links von Installation öffnen"
             }
           },
           {
@@ -156,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "JavaScript API.md",
+                "file": "Installation.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Gliederung von JavaScript API"
+              "title": "Gliederung von Installation"
             }
           }
         ]
@@ -185,6 +185,7 @@
   },
   "active": "3c504705ab3c1c69",
   "lastOpenFiles": [
+    "JavaScript API.md",
     "Home.md",
     "Tri-State Model.md",
     "LOV Source Format.md",
